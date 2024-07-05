@@ -1,3 +1,6 @@
 [submodule "uniswap-v4"]
 	path = uniswap-v4
 	url = https://github.com/Uniswap/v4-core.git
+[submodule "contracts/lib/forge-std"]
+	path = contracts/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
