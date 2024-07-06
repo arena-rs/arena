@@ -1,0 +1,3 @@
+[submodule "uniswap-v4"]
+	path = uniswap-v4
+	url = https://github.com/uniswap/v4-core.git
