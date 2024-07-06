@@ -1,3 +1,5 @@
-pub struct Agent;
+use crate::engine::Instruction;
 
-pub struct Action;
+pub trait Agent {
+    fn act(&mut self, event: Instruction) -> Option<Instruction>;
+}

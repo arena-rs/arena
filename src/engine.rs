@@ -2,14 +2,18 @@ use crossbeam_channel::{unbounded, Receiver, Sender};
 use revm::{
     db::{emptydb::EmptyDB, in_memory_db::CacheDB},
 };
+use crate::agent::Agent;
+use std::collections::HashMap;
 
 pub struct Engine {
     pub env: CacheDB<EmptyDB>,
     pub socket: Receiver<Instruction>,
+    pub agents: HashMap<String, Box<dyn Agent>>,
 
     send: Sender<Instruction>,
 }
 
+#[derive(Debug, Clone)]
 pub enum Instruction {
     CreateToken {
         name: String,
@@ -26,6 +30,7 @@ impl Engine {
         Self {
             env: CacheDB::new(EmptyDB::new()),
             socket: receiver,
+            agents: HashMap::new(),
             send: sender,
         }
     }
@@ -34,8 +39,12 @@ impl Engine {
         self.send.clone()
     }
 
-    pub fn run(&self) {
+    pub fn run(&mut self) {
         while let Ok(instruction) = self.socket.recv() {
+            for (_, agent) in &mut self.agents {
+                agent.act(instruction.clone());
+            }
+
             match instruction {
                 Instruction::CreateToken { name, symbol, decimals } => {
                     println!("Creating {name} token with symbol {symbol} and decimals {decimals}");
