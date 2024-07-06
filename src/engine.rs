@@ -1,9 +1,10 @@
-use crossbeam_channel::{unbounded, Receiver, Sender};
-use revm::{
-    db::{emptydb::EmptyDB, in_memory_db::CacheDB},
-};
-use crate::agent::Agent;
 use std::collections::HashMap;
+
+use alloy::primitives::{Address, U256, Uint, Signed};
+use crossbeam_channel::{unbounded, Receiver, Sender};
+use revm::db::{emptydb::EmptyDB, in_memory_db::CacheDB};
+
+use crate::agent::Agent;
 
 pub struct Engine {
     pub env: CacheDB<EmptyDB>,
@@ -21,6 +22,20 @@ pub enum Instruction {
         decimals: u8,
     },
 
+    CreatePool {
+        token_0: Address,
+        token_1: Address,
+        fee: Uint<24, 1>,
+        tick_spacing: Signed<24, 1>,
+        sqrt_price_x96: Uint<160, 3>,
+    },
+
+    Message {
+        id: String,
+        message: String, 
+    },
+
+    Tick,
     Halt,
 }
 
@@ -46,9 +61,24 @@ impl Engine {
             }
 
             match instruction {
-                Instruction::CreateToken { name, symbol, decimals } => {
+                Instruction::CreateToken {
+                    name,
+                    symbol,
+                    decimals,
+                } => {
                     println!("Creating {name} token with symbol {symbol} and decimals {decimals}");
                 }
+                Instruction::CreatePool {
+                    token_0,
+                    token_1,
+                    fee,
+                    tick_spacing,
+                    sqrt_price_x96
+                } => {
+                    println!("Creating pool between {token_0} and {token_1} with fee {fee}");
+                }
+                Instruction::Tick => continue,
+                Instruction::Message { .. } => continue,
                 Instruction::Halt => break,
             }
         }
@@ -64,11 +94,13 @@ mod tests {
         let engine = Engine::new();
         let sender = engine.spawn();
 
-        sender.send(Instruction::CreateToken {
-            name: "Test".to_string(),
-            symbol: "TST".to_string(),
-            decimals: 18,
-        }).unwrap();
+        sender
+            .send(Instruction::CreateToken {
+                name: "Test".to_string(),
+                symbol: "TST".to_string(),
+                decimals: 18,
+            })
+            .unwrap();
 
         sender.send(Instruction::Halt).unwrap();
 
