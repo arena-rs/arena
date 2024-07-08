@@ -1,15 +1,21 @@
 [package]
-name = "arena"
+name = "arena-core"
+description = "Robust simulation toolkit for Uniswap v4"
+license = "MIT"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-alloy = { version = "0.1.3", features = ["full", "node-bindings"] }
+alloy = { version = "0.1.3", features = ["full", "node-bindings", "sol-types", "contract"] }
 tokio = { version = "1.36.0", features = ["full"] }
 revm = "10.0.0"
+octane = { git = "https://github.com/arena-rs/octane" }
 crossbeam-channel = "0.5"
 alloy-sol-types = "0.7.6"
 hyper = { version = "0.14", features = ["client", "http1", "tcp"] }
+serde = "1.0.204"
+async-trait = "0.1.81"
+anyhow = "1.0.86"
 
 [lib]
 doctest = false

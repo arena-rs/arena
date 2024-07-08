@@ -1,6 +1,3 @@
-[submodule "v4-core"]
-	path = contracts/v4-core
-	url = https://github.com/uniswap/v4-core
 [submodule "contracts/v4"]
 	path = contracts/v4
 	url = https://github.com/uniswap/v4-core
