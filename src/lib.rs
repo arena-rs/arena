@@ -3,7 +3,7 @@ use std::sync::Arc;
 use alloy::{
     network::EthereumWallet,
     node_bindings::Anvil,
-    primitives::{Uint, U256},
+    primitives::{Address, Bytes, Signed, Uint, U256},
     providers::ProviderBuilder,
     signers::local::PrivateKeySigner,
     sol,
@@ -11,13 +11,17 @@ use alloy::{
 use anyhow::{anyhow, Result};
 use octane::{
     agent::Agent,
+    world::World,
     machine::{Behavior, EventStream},
     messenger::{Messager, To},
     AnvilProvider,
 };
 use serde::{Deserialize, Serialize};
 
-use crate::bindings::poolmanager::PoolManager;
+use crate::bindings::{
+    arenatoken::ArenaToken,
+    poolmanager::{PoolManager, PoolManager::PoolKey},
+};
 
 pub mod bindings;
 
@@ -31,7 +35,41 @@ impl Behavior<()> for Deployer {
         client: Arc<AnvilProvider>,
         messager: Messager,
     ) -> Result<Option<EventStream<()>>> {
-        let pool_manager = PoolManager::deploy(client.clone(), Uint::from(5000));
+        let pool_manager = PoolManager::deploy(client.clone(), Uint::from(5000))
+            .await
+            .unwrap();
+
+        let currency_0 = ArenaToken::deploy(
+            client.clone(),
+            String::from("ARN0"),
+            String::from("ARN0"),
+            18,
+        )
+        .await
+        .unwrap();
+        let currency_1 = ArenaToken::deploy(
+            client.clone(),
+            String::from("ARN1"),
+            String::from("ARN1"),
+            18,
+        )
+        .await
+        .unwrap();
+
+        let key = PoolKey {
+            currency0: *currency_0.address(),
+            currency1: *currency_1.address(),
+            fee: 0,
+            tickSpacing: 24,
+            hooks: Address::default(),
+        };
+
+        let tx = pool_manager.initialize(key, Uint::from(1000), Bytes::default());
+
+        let tx_hash = tx.send().await?.watch().await?;
+
+        println!("pool deployed: {tx_hash}");
+
         Ok(None)
     }
 }
@@ -52,7 +90,14 @@ mod tests {
         let provider = ProviderBuilder::new().wallet(wallet).on_http(rpc_url);
 
         let agent = Agent::builder("deployer")
-            .with_behavior(Deployer)
-            .build(Arc::new(provider), messager);
+            .with_behavior(Deployer);
+            // .build(Arc::new(provider), messager)
+            // .unwrap();
+
+        let mut world = World::new("id");
+
+        world.add_agent(agent);
+
+        world.run().await;
     }
 }
