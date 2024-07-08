@@ -1,8 +1,12 @@
 use std::sync::Arc;
 
 use alloy::{
-    network::EthereumWallet, node_bindings::Anvil, primitives::U256, providers::ProviderBuilder,
-    signers::local::PrivateKeySigner, sol,
+    network::EthereumWallet,
+    node_bindings::Anvil,
+    primitives::{Uint, U256},
+    providers::ProviderBuilder,
+    signers::local::PrivateKeySigner,
+    sol,
 };
 use anyhow::{anyhow, Result};
 use octane::{
@@ -11,8 +15,8 @@ use octane::{
     messenger::{Messager, To},
     AnvilProvider,
 };
-use alloy::primitives::Uint;
 use serde::{Deserialize, Serialize};
+
 use crate::bindings::poolmanager::PoolManager;
 
 pub mod bindings;
