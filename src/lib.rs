@@ -8,6 +8,7 @@ use alloy::{
     signers::local::PrivateKeySigner,
     sol,
 };
+use std::str::FromStr;
 use anyhow::{anyhow, Result};
 use octane::{
     agent::Agent,
@@ -47,6 +48,7 @@ impl Behavior<()> for Deployer {
         )
         .await
         .unwrap();
+
         let currency_1 = ArenaToken::deploy(
             client.clone(),
             String::from("ARN1"),
@@ -59,16 +61,17 @@ impl Behavior<()> for Deployer {
         let key = PoolKey {
             currency0: *currency_0.address(),
             currency1: *currency_1.address(),
-            fee: 0,
-            tickSpacing: 24,
+            fee: 10,
+            tickSpacing: 2,
             hooks: Address::default(),
         };
 
-        let tx = pool_manager.initialize(key, Uint::from(1000), Bytes::default());
 
-        let tx_hash = tx.send().await?.watch().await?;
+        let tx = pool_manager.initialize(key, U256::from_str("42951287310").unwrap(), Bytes::default());
 
-        println!("pool deployed: {tx_hash}");
+        let tx = tx.send().await?.watch().await?;
+
+        // println!("pool deployed: {tx}");
 
         Ok(None)
     }
@@ -80,6 +83,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_behaviour() {
+        env_logger::init();
+
         let messager = Messager::new();
         let anvil = Anvil::new().try_spawn().unwrap();
 

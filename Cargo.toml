@@ -16,6 +16,8 @@ hyper = { version = "0.14", features = ["client", "http1", "tcp"] }
 serde = "1.0.204"
 async-trait = "0.1.81"
 anyhow = "1.0.86"
+tracing = "0.1.40"
+env_logger = "0.11.3"
 
 [lib]
 doctest = false
