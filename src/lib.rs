@@ -40,8 +40,8 @@ impl Behavior<()> for Deployer {
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_behaviour() {
+    #[tokio::test]
+    async fn test_behaviour() {
         let messager = Messager::new();
         let anvil = Anvil::new().try_spawn().unwrap();
 
