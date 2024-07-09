@@ -53,7 +53,14 @@ impl Behavior<()> for Deployer {
 
         let tx = tx.send().await?.watch().await?;
 
-        messager.send(To::All, DeploymentParams { pool_manager: *pool_manager.address() }).await?;
+        messager
+            .send(
+                To::All,
+                DeploymentParams {
+                    pool_manager: *pool_manager.address(),
+                },
+            )
+            .await?;
         Ok(None)
     }
 }

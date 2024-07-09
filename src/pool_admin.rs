@@ -53,7 +53,7 @@ impl Behavior<Message> for PoolAdmin {
 
             if let DeploymentParams { .. } = query {
                 self.deployment = Some(query);
-                break; 
+                break;
             }
         }
 
@@ -67,12 +67,10 @@ impl Behavior<Message> for PoolAdmin {
                 eprintln!("Failed to deserialize the event data into a PoolAdminQuery");
                 return Ok(ControlFlow::Continue);
             }
-        };   
+        };
 
         match query {
-            PoolAdminQuery::CreatePool(pool_creation) => {
-                Ok(ControlFlow::Continue)
-            },
+            PoolAdminQuery::CreatePool(pool_creation) => Ok(ControlFlow::Continue),
         }
     }
 }

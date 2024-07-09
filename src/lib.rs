@@ -14,11 +14,13 @@ use octane::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::bindings::{
-    arenatoken::ArenaToken,
-    poolmanager::{PoolManager, PoolManager::PoolKey},
+use crate::{
+    bindings::{
+        arenatoken::ArenaToken,
+        poolmanager::{PoolManager, PoolManager::PoolKey},
+    },
+    deployer::DeploymentParams,
 };
-use crate::deployer::DeploymentParams;
 
 pub mod bindings;
 pub mod deployer;
