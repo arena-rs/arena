@@ -18,6 +18,7 @@ async-trait = "0.1.81"
 anyhow = "1.0.86"
 tracing = "0.1.40"
 env_logger = "0.11.3"
+serde_json = "1.0.120"
 
 [lib]
 doctest = false
