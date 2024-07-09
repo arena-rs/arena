@@ -18,6 +18,7 @@ use crate::bindings::{
     arenatoken::ArenaToken,
     poolmanager::{PoolManager, PoolManager::PoolKey},
 };
+use crate::deployer::DeploymentParams;
 
 pub mod bindings;
 pub mod deployer;

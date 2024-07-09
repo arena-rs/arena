@@ -664,6 +664,7 @@ dependencies = [
  "async-trait",
  "crossbeam-channel",
  "env_logger",
+ "futures",
  "hyper 0.14.29",
  "octane",
  "revm",

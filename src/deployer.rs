@@ -3,6 +3,11 @@ use super::*;
 #[derive(Debug, Serialize, Deserialize)]
 struct Deployer;
 
+#[derive(Debug, Deserialize, Serialize)]
+pub struct DeploymentParams {
+    pool_manager: Address,
+}
+
 #[async_trait::async_trait]
 impl Behavior<()> for Deployer {
     async fn startup(
@@ -48,8 +53,7 @@ impl Behavior<()> for Deployer {
 
         let tx = tx.send().await?.watch().await?;
 
-        // println!("pool deployed: {tx}");
-
+        messager.send(To::All, DeploymentParams { pool_manager: *pool_manager.address() }).await?;
         Ok(None)
     }
 }
