@@ -25,7 +25,7 @@ pub struct PoolParams {
     key: PoolKey,
 
     sqrt_price_x96: U256,
-    hook_date: Bytes,
+    hook_data: Bytes,
 }
 
 use futures::stream::StreamExt;
@@ -70,7 +70,23 @@ impl Behavior<Message> for PoolAdmin {
         };
 
         match query {
-            PoolAdminQuery::CreatePool(pool_creation) => Ok(ControlFlow::Continue),
+            PoolAdminQuery::CreatePool(pool_creation) => {
+                // will never panic as is always Some
+                let pool_manager = PoolManager::new(
+                    self.deployment.clone().unwrap().pool_manager,
+                    self.client.clone().unwrap(),
+                );
+
+                let tx = pool_manager.initialize(
+                    pool_creation.key,
+                    pool_creation.sqrt_price_x96,
+                    pool_creation.hook_data,
+                );
+
+                tx.send().await?.watch().await?;
+
+                Ok(ControlFlow::Continue)
+            }
         }
     }
 }
