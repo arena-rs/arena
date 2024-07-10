@@ -1,1 +1,19 @@
-# arena
+# arena 🏟️
+
+Arena is a powerful and extensible framework for holistic economic modelling and simulation of Uniswap v4 strategies, hooks and pools.
+
+Track how metrics evolve over time, and over various market conditions.
+
+## Overview
+
+Arena uses a modified version of Arbiter engine called octane, which alloys the usage of alloy and anvil for simulation. An agent-oriented architecture is utilized.
+
+- [ ] Deployer agent.
+- [ ] Pool admin agent.
+- [ ] Arbitrageur agent.  
+
+## Initial goals
+- Simulate fee accumulation for a stable pool across various market volatilities using an Ornstein-Uhlenbeck process and agentic modelling.
+- Geometric Brownian motion for a non-stable pool.
+- Provide a set of reusable, extensible and modular types that allow any liquidity provision strategy to be defined, and any market condition.
+- Command line interface for plug-and-play analytics and simulation.
