@@ -113,7 +113,8 @@ mod tests {
     async fn test_behaviour() {
         env_logger::init();
 
-        let agent = Agent::builder("deployer").with_behavior(Deployer);
+        // messager, client are initialized later
+        let agent = Agent::builder("deployer").with_behavior(Deployer { messager: None, client: None });
 
         let mut world = World::new("id");
 
