@@ -4,13 +4,11 @@ use alloy::{
     primitives::{Address, Bytes, Uint, U256},
     sol,
 };
-use octane::machine::ControlFlow;
-use octane::messenger::Message;
 use anyhow::Result;
 use octane::{
     agent::Agent,
-    machine::{Behavior, EventStream},
-    messenger::{Messager, To},
+    machine::{Behavior, ControlFlow, EventStream},
+    messenger::{Message, Messager, To},
     world::World,
     AnvilProvider,
 };
@@ -19,12 +17,11 @@ use serde::{Deserialize, Serialize};
 use crate::{
     bindings::{
         arenatoken::ArenaToken,
-        poolmanager::{PoolManager, PoolManager::PoolKey},
         liquidexchange::LiquidExchange,
+        poolmanager::{PoolManager, PoolManager::PoolKey},
     },
+    deployer::{DeploymentRequest, DeploymentResponse},
 };
-use crate::deployer::DeploymentRequest;
-use crate::deployer::DeploymentResponse;
 
 pub mod bindings;
 pub mod deployer;

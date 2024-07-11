@@ -21,7 +21,7 @@ pub enum DeploymentRequest {
         token_0: Address,
         token_1: Address,
         initial_price: f64,
-    }
+    },
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -62,41 +62,45 @@ impl Behavior<Message> for Deployer {
         };
 
         match query {
-            DeploymentRequest::Token { name, symbol, decimals } => {
-                let token = ArenaToken::deploy(
-                    self.client.clone().unwrap(),
-                    name,
-                    symbol,
-                    decimals,
-                )
-                .await
-                .unwrap();
+            DeploymentRequest::Token {
+                name,
+                symbol,
+                decimals,
+            } => {
+                let token =
+                    ArenaToken::deploy(self.client.clone().unwrap(), name, symbol, decimals)
+                        .await
+                        .unwrap();
 
-                self.messager.clone().unwrap()
-                    .send(
-                        To::All,
-                        DeploymentResponse::Token(*token.address()),
-                    )
+                self.messager
+                    .clone()
+                    .unwrap()
+                    .send(To::All, DeploymentResponse::Token(*token.address()))
                     .await?;
 
                 Ok(ControlFlow::Continue)
-            },
-            DeploymentRequest::LiquidExchange { token_0, token_1, initial_price } => {
+            }
+            DeploymentRequest::LiquidExchange {
+                token_0,
+                token_1,
+                initial_price,
+            } => {
                 let lex = LiquidExchange::deploy(
                     self.client.clone().unwrap(),
                     token_0,
                     token_1,
                     U256::from((initial_price * 10f64.powf(18.0)) as u64),
-                ).await.unwrap();
+                )
+                .await
+                .unwrap();
 
-                self.messager.clone().unwrap()
-                    .send(
-                        To::All,
-                        DeploymentResponse::LiquidExchange(*lex.address()),
-                    )
+                self.messager
+                    .clone()
+                    .unwrap()
+                    .send(To::All, DeploymentResponse::LiquidExchange(*lex.address()))
                     .await?;
-                        Ok(ControlFlow::Continue)
-                    }
+                Ok(ControlFlow::Continue)
+            }
         }
     }
 }

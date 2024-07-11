@@ -1,3 +1,3 @@
 pub mod arenatoken;
-pub mod poolmanager;
 pub mod liquidexchange;
+pub mod poolmanager;
