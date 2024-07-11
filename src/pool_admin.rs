@@ -10,7 +10,7 @@ pub struct PoolAdmin {
     #[serde(skip)]
     pub client: Option<Arc<AnvilProvider>>,
 
-    pub deployment: Option<DeploymentParams>,
+    pub deployment: Option<Address>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -43,7 +43,7 @@ impl Behavior<Message> for PoolAdmin {
         let mut stream = messager.clone().stream().unwrap();
 
         while let Some(event) = stream.next().await {
-            let query: DeploymentParams = match serde_json::from_str(&event.data) {
+            let query: DeploymentResponse = match serde_json::from_str(&event.data) {
                 Ok(query) => query,
                 Err(_) => {
                     eprintln!("Failed to deserialize the event data into a PoolAdminQuery");
@@ -51,8 +51,8 @@ impl Behavior<Message> for PoolAdmin {
                 }
             };
 
-            if let DeploymentParams { .. } = query {
-                self.deployment = Some(query);
+            if let DeploymentResponse::PoolManager(address) = query {
+                self.deployment = Some(address);
                 break;
             }
         }
@@ -73,7 +73,7 @@ impl Behavior<Message> for PoolAdmin {
             PoolAdminQuery::CreatePool(pool_creation) => {
                 // will never panic as is always Some
                 let pool_manager = PoolManager::new(
-                    self.deployment.clone().unwrap().pool_manager,
+                    self.deployment.clone().unwrap(),
                     self.client.clone().unwrap(),
                 );
 

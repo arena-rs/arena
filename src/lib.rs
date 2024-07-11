@@ -22,8 +22,9 @@ use crate::{
         poolmanager::{PoolManager, PoolManager::PoolKey},
         liquidexchange::LiquidExchange,
     },
-    deployer::DeploymentParams,
 };
+use crate::deployer::DeploymentRequest;
+use crate::deployer::DeploymentResponse;
 
 pub mod bindings;
 pub mod deployer;

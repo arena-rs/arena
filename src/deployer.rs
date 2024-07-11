@@ -10,11 +10,6 @@ struct Deployer {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct DeploymentParams {
-    pub pool_manager: Address,
-}
-
-#[derive(Debug, Deserialize, Serialize, Clone)]
 pub enum DeploymentRequest {
     Token {
         name: String,
@@ -27,6 +22,13 @@ pub enum DeploymentRequest {
         token_1: Address,
         initial_price: f64,
     }
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub enum DeploymentResponse {
+    Token(Address),
+    LiquidExchange(Address),
+    PoolManager(Address),
 }
 
 #[async_trait::async_trait]
@@ -43,9 +45,7 @@ impl Behavior<Message> for Deployer {
         messager
             .send(
                 To::All,
-                DeploymentParams {
-                    pool_manager: *pool_manager.address(),
-                },
+                DeploymentResponse::PoolManager(*pool_manager.address()),
             )
             .await?;
 
@@ -72,6 +72,13 @@ impl Behavior<Message> for Deployer {
                 .await
                 .unwrap();
 
+                self.messager.clone().unwrap()
+                    .send(
+                        To::All,
+                        DeploymentResponse::Token(*token.address()),
+                    )
+                    .await?;
+
                 Ok(ControlFlow::Continue)
             },
             DeploymentRequest::LiquidExchange { token_0, token_1, initial_price } => {
@@ -80,9 +87,16 @@ impl Behavior<Message> for Deployer {
                     token_0,
                     token_1,
                     U256::from((initial_price * 10f64.powf(18.0)) as u64),
-                );
-                Ok(ControlFlow::Continue)
-            }
+                ).await.unwrap();
+
+                self.messager.clone().unwrap()
+                    .send(
+                        To::All,
+                        DeploymentResponse::LiquidExchange(*lex.address()),
+                    )
+                    .await?;
+                        Ok(ControlFlow::Continue)
+                    }
         }
     }
 }
