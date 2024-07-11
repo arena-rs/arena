@@ -113,8 +113,8 @@ impl Behavior<Message> for PriceChanger {
 
         let price = self.current_chunk.paths.clone()[0][self.cursor];
 
-        let tx = liquid_exchange
-            .setPrice(alloy::primitives::utils::parse_ether(&price.to_string())?);
+        let tx =
+            liquid_exchange.setPrice(alloy::primitives::utils::parse_ether(&price.to_string())?);
 
         tx.send().await?.watch().await?;
 
