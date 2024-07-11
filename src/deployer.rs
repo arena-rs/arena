@@ -114,7 +114,10 @@ mod tests {
         env_logger::init();
 
         // messager, client are initialized later
-        let agent = Agent::builder("deployer").with_behavior(Deployer { messager: None, client: None });
+        let agent = Agent::builder("deployer").with_behavior(Deployer {
+            messager: None,
+            client: None,
+        });
 
         let mut world = World::new("id");
 

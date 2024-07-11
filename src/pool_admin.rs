@@ -46,7 +46,7 @@ impl Behavior<Message> for PoolAdmin {
             let query: DeploymentResponse = match serde_json::from_str(&event.data) {
                 Ok(query) => query,
                 Err(_) => {
-                    eprintln!("Failed to deserialize the event data into a PoolAdminQuery");
+                    eprintln!("Failed to deserialize the event data into a DeploymentResponse");
                     continue;
                 }
             };
