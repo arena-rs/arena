@@ -22,6 +22,8 @@ pub enum DeploymentRequest {
         token_1: Address,
         initial_price: f64,
     },
+
+    Pool(PoolParams),
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -29,6 +31,9 @@ pub enum DeploymentResponse {
     Token(Address),
     LiquidExchange(Address),
     PoolManager(Address),
+
+    // params pass through if deployment is successful
+    Pool(PoolParams),
 }
 
 #[async_trait::async_trait]
@@ -101,6 +106,7 @@ impl Behavior<Message> for Deployer {
                     .await?;
                 Ok(ControlFlow::Continue)
             }
+            _ => Ok(ControlFlow::Continue),
         }
     }
 }

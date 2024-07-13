@@ -26,8 +26,11 @@ use crate::{
         poolmanager::{PoolManager, PoolManager::PoolKey},
     },
     deployer::{DeploymentRequest, DeploymentResponse},
+    pool_admin::PoolParams,
+    price_changer::PriceUpdate,
 };
 
+pub mod arbitrageur;
 pub mod bindings;
 pub mod deployer;
 pub mod pool_admin;

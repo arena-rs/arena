@@ -1,3 +1,4 @@
+use futures::stream::StreamExt;
 use octane::{machine::ControlFlow, messenger::Message};
 
 use super::*;
@@ -13,13 +14,7 @@ pub struct PoolAdmin {
     pub deployment: Option<Address>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-pub enum PoolAdminQuery {
-    /// Deploy request.
-    CreatePool(PoolParams),
-}
-
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct PoolParams {
     #[serde(skip)]
     key: PoolKey,
@@ -27,8 +22,6 @@ pub struct PoolParams {
     sqrt_price_x96: U256,
     hook_data: Bytes,
 }
-
-use futures::stream::StreamExt;
 
 #[async_trait::async_trait]
 impl Behavior<Message> for PoolAdmin {
@@ -61,7 +54,7 @@ impl Behavior<Message> for PoolAdmin {
     }
 
     async fn process(&mut self, event: Message) -> Result<ControlFlow> {
-        let query: PoolAdminQuery = match serde_json::from_str(&event.data) {
+        let query: DeploymentRequest = match serde_json::from_str(&event.data) {
             Ok(query) => query,
             Err(_) => {
                 eprintln!("Failed to deserialize the event data into a PoolAdminQuery");
@@ -70,7 +63,9 @@ impl Behavior<Message> for PoolAdmin {
         };
 
         match query {
-            PoolAdminQuery::CreatePool(pool_creation) => {
+            DeploymentRequest::Pool(pool_creation) => {
+                let key = pool_creation.clone();
+
                 // will never panic as is always Some
                 let pool_manager = PoolManager::new(
                     self.deployment.clone().unwrap(),
@@ -85,8 +80,15 @@ impl Behavior<Message> for PoolAdmin {
 
                 tx.send().await?.watch().await?;
 
+                self.messager
+                    .clone()
+                    .unwrap()
+                    .send(To::All, DeploymentResponse::Pool(key))
+                    .await?;
+
                 Ok(ControlFlow::Continue)
             }
+            _ => Ok(ControlFlow::Continue),
         }
     }
 }
