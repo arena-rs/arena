@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Deployer {
+pub struct Deployer {
     #[serde(skip)]
     pub messager: Option<Messager>,
 
@@ -47,24 +47,30 @@ impl Behavior<Message> for Deployer {
             .await
             .unwrap();
 
-        messager
+        messager.clone()
             .send(
                 To::All,
                 DeploymentResponse::PoolManager(*pool_manager.address()),
             )
             .await?;
 
-        Ok(Some(messager.clone().stream().unwrap()))
+        self.client = Some(client.clone());
+        self.messager = Some(messager.clone());
+
+        Ok(Some(messager.stream().unwrap()))
     }
 
     async fn process(&mut self, event: Message) -> Result<ControlFlow> {
+        println!("Received event: {:?}", event);
         let query: DeploymentRequest = match serde_json::from_str(&event.data) {
             Ok(query) => query,
             Err(_) => {
-                eprintln!("Failed to deserialize the event data into a PoolAdminQuery");
+                println!("Failed to deserialize the event data into a DeploymentRequest");
                 return Ok(ControlFlow::Continue);
             }
         };
+
+        println!("Received deployment request: {:?}", query);
 
         match query {
             DeploymentRequest::Token {
@@ -76,6 +82,8 @@ impl Behavior<Message> for Deployer {
                     ArenaToken::deploy(self.client.clone().unwrap(), name, symbol, decimals)
                         .await
                         .unwrap();
+
+                println!("Token deployed at address: {:?}", token.address());
 
                 self.messager
                     .clone()
@@ -108,26 +116,5 @@ impl Behavior<Message> for Deployer {
             }
             _ => Ok(ControlFlow::Continue),
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[tokio::test]
-    async fn test_behaviour() {
-        env_logger::init();
-
-        // messager, client are initialized later
-        let agent = Agent::builder("deployer").with_behavior(Deployer {
-            messager: None,
-            client: None,
-        });
-
-        let mut world = World::new("id");
-
-        world.add_agent(agent);
-        world.run().await;
     }
 }

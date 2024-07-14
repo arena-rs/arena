@@ -10,7 +10,7 @@ struct Arbitrageur {
 
     pub deployment: Option<Address>,
 
-    pub pool: Option<Address>,
+    pub pool: Option<PoolParams>,
 }
 
 #[async_trait::async_trait]
@@ -36,7 +36,7 @@ impl Behavior<Message> for Arbitrageur {
 
             match query {
                 DeploymentResponse::PoolManager(address) => self.deployment = Some(address),
-                // DeploymentResponse::Pool(address) => self.pool = Some(address),
+                DeploymentResponse::Pool(params) => self.pool = Some(params),
                 _ => {}
             }
 
