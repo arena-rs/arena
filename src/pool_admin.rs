@@ -50,6 +50,9 @@ impl Behavior<Message> for PoolAdmin {
             }
         }
 
+        self.client = Some(client.clone());
+        self.messager = Some(messager.clone());
+
         Ok(Some(messager.clone().stream().unwrap()))
     }
 
