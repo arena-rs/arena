@@ -40,16 +40,22 @@ pub mod pool_admin;
 mod tests {
     use super::*;
 
-    #[derive(Debug, Deserialize, Serialize)]
-    pub struct MockDeployer {}
+    #[derive(Debug, Serialize, Deserialize)]
+    pub struct MockDeployer {
+        #[serde(skip)]
+        pub messager: Option<Messager>,
+
+        #[serde(skip)]
+        pub client: Option<Arc<AnvilProvider>>,
+    }
 
     #[async_trait::async_trait]
-    impl Behavior<()> for MockDeployer {
+    impl Behavior<Message> for MockDeployer {
         async fn startup(
             &mut self,
             client: Arc<AnvilProvider>,
             messager: Messager,
-        ) -> Result<Option<EventStream<()>>> {
+        ) -> Result<Option<EventStream<Message>>> {
             messager
                 .send(
                     To::Agent("deployer".to_string()),
@@ -57,7 +63,33 @@ mod tests {
                 )
                 .await?;
 
-            Ok(None)
+            self.client = Some(client.clone());
+            self.messager = Some(messager.clone());
+        
+            Ok(Some(messager.clone().stream().unwrap()))
+        }
+
+        async fn process(&mut self, event: Message) -> Result<ControlFlow> {
+            let query: DeploymentResponse = match serde_json::from_str(&event.data) {
+                Ok(query) => query,
+                Err(_) => {
+                    eprintln!("Failed to deserialize the event data into a DeploymentResponse");
+                    return Ok(ControlFlow::Continue);
+                }
+            };
+
+            match query {
+                DeploymentResponse::Token(address) => {
+                    let tok = ArenaToken::new(address, self.client.clone().unwrap());
+
+                    assert_eq!(tok.name().call().await.unwrap()._0, "TEST");
+                    assert_eq!(tok.symbol().call().await.unwrap()._0, "TST");
+                    assert_eq!(tok.decimals().call().await.unwrap()._0, 18);
+                }
+                _ => {}
+            }
+
+            Ok(ControlFlow::Continue)
         }
     }
 
@@ -69,12 +101,11 @@ mod tests {
             messager: None,
             client: None,
         });
-        let mock_deployer = Agent::builder("mock_deployer").with_behavior(MockDeployer {});
+        let mock_deployer = Agent::builder("mock_deployer").with_behavior(MockDeployer { client: None, messager: None });
 
         let mut world = World::new("id");
 
         world.add_agent(mock_deployer);
-
         world.add_agent(deployer);
 
         world.run().await;
