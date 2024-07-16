@@ -182,7 +182,6 @@ interface LiquidExchange {
 pub mod LiquidExchange {
     use alloy::sol_types as alloy_sol_types;
 
-    
     /// The creation / init bytecode of the contract.
     ///
     /// ```text
@@ -436,9 +435,7 @@ pub mod LiquidExchange {
             );
             type Token<'a> = <Self::Parameters<'a> as alloy_sol_types::SolType>::Token<'a>;
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -541,9 +538,7 @@ pub mod LiquidExchange {
             const SIGNATURE: &'static str = "admin()";
             const SELECTOR: [u8; 4] = [248u8, 81u8, 164u8, 64u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -646,9 +641,7 @@ pub mod LiquidExchange {
             const SIGNATURE: &'static str = "arbiterTokenX()";
             const SELECTOR: [u8; 4] = [59u8, 32u8, 73u8, 72u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -751,9 +744,7 @@ pub mod LiquidExchange {
             const SIGNATURE: &'static str = "arbiterTokenY()";
             const SELECTOR: [u8; 4] = [208u8, 196u8, 114u8, 236u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -856,9 +847,7 @@ pub mod LiquidExchange {
             const SIGNATURE: &'static str = "price()";
             const SELECTOR: [u8; 4] = [160u8, 53u8, 177u8, 254u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -961,9 +950,7 @@ pub mod LiquidExchange {
             const SIGNATURE: &'static str = "setPrice(uint256)";
             const SELECTOR: [u8; 4] = [145u8, 183u8, 245u8, 237u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -1083,9 +1070,7 @@ pub mod LiquidExchange {
             const SIGNATURE: &'static str = "swap(address,uint256)";
             const SELECTOR: [u8; 4] = [208u8, 4u8, 240u8, 247u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]

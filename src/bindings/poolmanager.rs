@@ -1386,7 +1386,6 @@ interface PoolManager {
 pub mod PoolManager {
     use alloy::sol_types as alloy_sol_types;
 
-    
     /// The creation / init bytecode of the contract.
     ///
     /// ```text
@@ -2422,9 +2421,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "AlreadyUnlocked()";
             const SELECTOR: [u8; 4] = [80u8, 144u8, 214u8, 198u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -2477,9 +2474,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "CurrenciesOutOfOrderOrEqual()";
             const SELECTOR: [u8; 4] = [234u8, 166u8, 198u8, 235u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -2532,9 +2527,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "CurrencyNotSettled()";
             const SELECTOR: [u8; 4] = [82u8, 18u8, 203u8, 161u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -2587,9 +2580,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "DelegateCallNotAllowed()";
             const SELECTOR: [u8; 4] = [13u8, 137u8, 67u8, 142u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -2642,9 +2633,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "InvalidCaller()";
             const SELECTOR: [u8; 4] = [72u8, 245u8, 195u8, 237u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -2697,9 +2686,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "InvalidProtocolFee()";
             const SELECTOR: [u8; 4] = [186u8, 151u8, 248u8, 56u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -2752,9 +2739,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "ManagerLocked()";
             const SELECTOR: [u8; 4] = [84u8, 227u8, 202u8, 13u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -2807,9 +2792,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "NonZeroNativeValue()";
             const SELECTOR: [u8; 4] = [25u8, 210u8, 69u8, 207u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -2862,9 +2845,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "PoolNotInitialized()";
             const SELECTOR: [u8; 4] = [72u8, 106u8, 163u8, 7u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -2917,9 +2898,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "ProtocolFeeCannotBeFetched()";
             const SELECTOR: [u8; 4] = [30u8, 228u8, 151u8, 2u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -2972,9 +2951,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "SwapAmountCannotBeZero()";
             const SELECTOR: [u8; 4] = [190u8, 139u8, 133u8, 7u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -3027,9 +3004,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "TickSpacingTooLarge()";
             const SELECTOR: [u8; 4] = [176u8, 43u8, 93u8, 194u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -3082,9 +3057,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "TickSpacingTooSmall()";
             const SELECTOR: [u8; 4] = [22u8, 254u8, 118u8, 150u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -3137,9 +3110,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "UnauthorizedDynamicLPFeeUpdate()";
             const SELECTOR: [u8; 4] = [48u8, 210u8, 22u8, 65u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -3208,12 +3179,7 @@ pub mod PoolManager {
             }
             #[inline]
             fn topics(&self) -> <Self::TopicList as alloy_sol_types::SolType>::RustType {
-                (
-                    Self::SIGNATURE_HASH,
-                    self.owner,
-                    self.spender,
-                    self.id,
-                )
+                (Self::SIGNATURE_HASH, self.owner, self.spender, self.id)
             }
             #[inline]
             fn encode_topics_raw(
@@ -3327,11 +3293,7 @@ pub mod PoolManager {
             }
             #[inline]
             fn topics(&self) -> <Self::TopicList as alloy_sol_types::SolType>::RustType {
-                (
-                    Self::SIGNATURE_HASH,
-                    self.currency0,
-                    self.currency1,
-                )
+                (Self::SIGNATURE_HASH, self.currency0, self.currency1)
             }
             #[inline]
             fn encode_topics_raw(
@@ -3435,11 +3397,7 @@ pub mod PoolManager {
             }
             #[inline]
             fn topics(&self) -> <Self::TopicList as alloy_sol_types::SolType>::RustType {
-                (
-                    Self::SIGNATURE_HASH,
-                    self.id,
-                    self.sender,
-                )
+                (Self::SIGNATURE_HASH, self.id, self.sender)
             }
             #[inline]
             fn encode_topics_raw(
@@ -3527,11 +3485,7 @@ pub mod PoolManager {
             }
             #[inline]
             fn topics(&self) -> <Self::TopicList as alloy_sol_types::SolType>::RustType {
-                (
-                    Self::SIGNATURE_HASH,
-                    self.owner,
-                    self.operator,
-                )
+                (Self::SIGNATURE_HASH, self.owner, self.operator)
             }
             #[inline]
             fn encode_topics_raw(
@@ -3612,11 +3566,7 @@ pub mod PoolManager {
             }
             #[inline]
             fn topics(&self) -> <Self::TopicList as alloy_sol_types::SolType>::RustType {
-                (
-                    Self::SIGNATURE_HASH,
-                    self.user,
-                    self.newOwner,
-                )
+                (Self::SIGNATURE_HASH, self.user, self.newOwner)
             }
             #[inline]
             fn encode_topics_raw(
@@ -3998,12 +3948,7 @@ pub mod PoolManager {
             }
             #[inline]
             fn topics(&self) -> <Self::TopicList as alloy_sol_types::SolType>::RustType {
-                (
-                    Self::SIGNATURE_HASH,
-                    self.from,
-                    self.to,
-                    self.id,
-                )
+                (Self::SIGNATURE_HASH, self.from, self.to, self.id)
             }
             #[inline]
             fn encode_topics_raw(
@@ -4085,9 +4030,7 @@ pub mod PoolManager {
             type Parameters<'a> = (alloy::sol_types::sol_data::Uint<256>,);
             type Token<'a> = <Self::Parameters<'a> as alloy_sol_types::SolType>::Token<'a>;
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -4185,9 +4128,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "MAX_TICK_SPACING()";
             const SELECTOR: [u8; 4] = [96u8, 70u8, 15u8, 6u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -4291,9 +4232,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "MIN_TICK_SPACING()";
             const SELECTOR: [u8; 4] = [7u8, 239u8, 240u8, 221u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -4416,9 +4355,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "allowance(address,address,uint256)";
             const SELECTOR: [u8; 4] = [89u8, 138u8, 249u8, 231u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -4551,9 +4488,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "approve(address,uint256,uint256)";
             const SELECTOR: [u8; 4] = [66u8, 106u8, 132u8, 147u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -4681,9 +4616,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "balanceOf(address,uint256)";
             const SELECTOR: [u8; 4] = [0u8, 253u8, 213u8, 142u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -4811,9 +4744,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "burn(address,uint256,uint256)";
             const SELECTOR: [u8; 4] = [245u8, 41u8, 138u8, 202u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -4948,9 +4879,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "collectProtocolFees(address,address,uint256)";
             const SELECTOR: [u8; 4] = [129u8, 97u8, 184u8, 116u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -5087,9 +5016,7 @@ pub mod PoolManager {
                 "donate((address,address,uint24,int24,address),uint256,uint256,bytes)";
             const SELECTOR: [u8; 4] = [35u8, 66u8, 102u8, 215u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -5205,9 +5132,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "extsload(bytes32)";
             const SELECTOR: [u8; 4] = [30u8, 46u8, 174u8, 175u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -5329,9 +5254,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "extsload(bytes32,uint256)";
             const SELECTOR: [u8; 4] = [53u8, 253u8, 99u8, 26u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -5449,9 +5372,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "extsload(bytes32[])";
             const SELECTOR: [u8; 4] = [219u8, 208u8, 53u8, 255u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -5566,9 +5487,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "exttload(bytes32[])";
             const SELECTOR: [u8; 4] = [155u8, 246u8, 100u8, 95u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -5677,9 +5596,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "exttload(bytes32)";
             const SELECTOR: [u8; 4] = [241u8, 53u8, 186u8, 170u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -5809,9 +5726,7 @@ pub mod PoolManager {
                 "initialize((address,address,uint24,int24,address),uint160,bytes)";
             const SELECTOR: [u8; 4] = [105u8, 92u8, 91u8, 245u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -5937,9 +5852,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "isOperator(address,address)";
             const SELECTOR: [u8; 4] = [182u8, 54u8, 60u8, 242u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -6067,9 +5980,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "mint(address,uint256,uint256)";
             const SELECTOR: [u8; 4] = [21u8, 110u8, 41u8, 246u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -6209,9 +6120,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "modifyLiquidity((address,address,uint24,int24,address),(int24,int24,int256,bytes32),bytes)";
             const SELECTOR: [u8; 4] = [90u8, 107u8, 207u8, 218u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -6320,9 +6229,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "owner()";
             const SELECTOR: [u8; 4] = [141u8, 165u8, 203u8, 91u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -6425,9 +6332,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "protocolFeeController()";
             const SELECTOR: [u8; 4] = [240u8, 45u8, 227u8, 178u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -6532,9 +6437,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "protocolFeesAccrued(address)";
             const SELECTOR: [u8; 4] = [151u8, 232u8, 205u8, 78u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -6651,9 +6554,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "setOperator(address,bool)";
             const SELECTOR: [u8; 4] = [85u8, 138u8, 114u8, 151u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -6772,9 +6673,7 @@ pub mod PoolManager {
                 "setProtocolFee((address,address,uint24,int24,address),uint24)";
             const SELECTOR: [u8; 4] = [126u8, 135u8, 206u8, 125u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -6884,9 +6783,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "setProtocolFeeController(address)";
             const SELECTOR: [u8; 4] = [45u8, 119u8, 19u8, 137u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -6995,9 +6892,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "settle(address)";
             const SELECTOR: [u8; 4] = [106u8, 37u8, 107u8, 41u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -7106,9 +7001,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "supportsInterface(bytes4)";
             const SELECTOR: [u8; 4] = [1u8, 255u8, 201u8, 167u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -7228,9 +7121,7 @@ pub mod PoolManager {
                 "swap((address,address,uint24,int24,address),(bool,int256,uint160),bytes)";
             const SELECTOR: [u8; 4] = [243u8, 205u8, 145u8, 76u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -7341,9 +7232,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "sync(address)";
             const SELECTOR: [u8; 4] = [165u8, 132u8, 17u8, 148u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -7466,9 +7355,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "take(address,address,uint256)";
             const SELECTOR: [u8; 4] = [11u8, 13u8, 156u8, 9u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -7599,9 +7486,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "transfer(address,uint256,uint256)";
             const SELECTOR: [u8; 4] = [9u8, 91u8, 205u8, 182u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -7739,9 +7624,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "transferFrom(address,address,uint256,uint256)";
             const SELECTOR: [u8; 4] = [254u8, 153u8, 4u8, 154u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -7857,9 +7740,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "transferOwnership(address)";
             const SELECTOR: [u8; 4] = [242u8, 253u8, 227u8, 139u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -7968,9 +7849,7 @@ pub mod PoolManager {
             const SIGNATURE: &'static str = "unlock(bytes)";
             const SELECTOR: [u8; 4] = [72u8, 200u8, 148u8, 145u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -8086,9 +7965,7 @@ pub mod PoolManager {
                 "updateDynamicLPFee((address,address,uint24,int24,address),uint24)";
             const SELECTOR: [u8; 4] = [82u8, 117u8, 150u8, 81u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]

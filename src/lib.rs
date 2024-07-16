@@ -1,8 +1,6 @@
-use std::{sync::Arc};
+use std::sync::Arc;
 
-use alloy::{
-    primitives::{Address, Bytes, Uint, U256},
-};
+use alloy::primitives::{Address, Bytes, Uint, U256};
 use anyhow::Result;
 use futures::stream::StreamExt;
 use octane::{
@@ -33,10 +31,10 @@ pub mod types;
 
 #[cfg(test)]
 mod tests {
+    use octane::{agent::Agent, world::World};
+
     use super::*;
-    use octane::agent::Agent;
     use crate::deployer::Deployer;
-    use octane::world::World;
 
     #[derive(Debug, Serialize, Deserialize)]
     pub struct MockDeployer {

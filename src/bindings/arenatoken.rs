@@ -392,7 +392,6 @@ interface ArenaToken {
 pub mod ArenaToken {
     use alloy::sol_types as alloy_sol_types;
 
-    
     /// The creation / init bytecode of the contract.
     ///
     /// ```text
@@ -467,11 +466,7 @@ pub mod ArenaToken {
             }
             #[inline]
             fn topics(&self) -> <Self::TopicList as alloy_sol_types::SolType>::RustType {
-                (
-                    Self::SIGNATURE_HASH,
-                    self.owner,
-                    self.spender,
-                )
+                (Self::SIGNATURE_HASH, self.owner, self.spender)
             }
             #[inline]
             fn encode_topics_raw(
@@ -559,11 +554,7 @@ pub mod ArenaToken {
             }
             #[inline]
             fn topics(&self) -> <Self::TopicList as alloy_sol_types::SolType>::RustType {
-                (
-                    Self::SIGNATURE_HASH,
-                    self.from,
-                    self.to,
-                )
+                (Self::SIGNATURE_HASH, self.from, self.to)
             }
             #[inline]
             fn encode_topics_raw(
@@ -658,9 +649,7 @@ pub mod ArenaToken {
             );
             type Token<'a> = <Self::Parameters<'a> as alloy_sol_types::SolType>::Token<'a>;
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -763,9 +752,7 @@ pub mod ArenaToken {
             const SIGNATURE: &'static str = "DOMAIN_SEPARATOR()";
             const SELECTOR: [u8; 4] = [54u8, 68u8, 229u8, 21u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -868,9 +855,7 @@ pub mod ArenaToken {
             const SIGNATURE: &'static str = "admin()";
             const SELECTOR: [u8; 4] = [248u8, 81u8, 164u8, 64u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -988,9 +973,7 @@ pub mod ArenaToken {
             const SIGNATURE: &'static str = "allowance(address,address)";
             const SELECTOR: [u8; 4] = [221u8, 98u8, 237u8, 62u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -1115,9 +1098,7 @@ pub mod ArenaToken {
             const SIGNATURE: &'static str = "approve(address,uint256)";
             const SELECTOR: [u8; 4] = [9u8, 94u8, 167u8, 179u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -1229,9 +1210,7 @@ pub mod ArenaToken {
             const SIGNATURE: &'static str = "balanceOf(address)";
             const SELECTOR: [u8; 4] = [112u8, 160u8, 130u8, 49u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -1338,9 +1317,7 @@ pub mod ArenaToken {
             const SIGNATURE: &'static str = "decimals()";
             const SELECTOR: [u8; 4] = [49u8, 60u8, 229u8, 103u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -1458,9 +1435,7 @@ pub mod ArenaToken {
             const SIGNATURE: &'static str = "mint(address,uint256)";
             const SELECTOR: [u8; 4] = [64u8, 193u8, 15u8, 25u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -1570,9 +1545,7 @@ pub mod ArenaToken {
             const SIGNATURE: &'static str = "name()";
             const SELECTOR: [u8; 4] = [6u8, 253u8, 222u8, 3u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -1677,9 +1650,7 @@ pub mod ArenaToken {
             const SIGNATURE: &'static str = "nonces(address)";
             const SELECTOR: [u8; 4] = [126u8, 206u8, 190u8, 0u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -1833,9 +1804,7 @@ pub mod ArenaToken {
                 "permit(address,address,uint256,uint256,uint8,bytes32,bytes32)";
             const SELECTOR: [u8; 4] = [213u8, 5u8, 172u8, 207u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -1960,9 +1929,7 @@ pub mod ArenaToken {
             const SIGNATURE: &'static str = "symbol()";
             const SELECTOR: [u8; 4] = [149u8, 216u8, 155u8, 65u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -2065,9 +2032,7 @@ pub mod ArenaToken {
             const SIGNATURE: &'static str = "totalSupply()";
             const SELECTOR: [u8; 4] = [24u8, 22u8, 13u8, 221u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -2185,9 +2150,7 @@ pub mod ArenaToken {
             const SIGNATURE: &'static str = "transfer(address,uint256)";
             const SELECTOR: [u8; 4] = [169u8, 5u8, 156u8, 187u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]
@@ -2317,9 +2280,7 @@ pub mod ArenaToken {
             const SIGNATURE: &'static str = "transferFrom(address,address,uint256)";
             const SELECTOR: [u8; 4] = [35u8, 184u8, 114u8, 221u8];
             #[inline]
-            fn new(
-                tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType,
-            ) -> Self {
+            fn new(tuple: <Self::Parameters<'_> as alloy_sol_types::SolType>::RustType) -> Self {
                 tuple.into()
             }
             #[inline]

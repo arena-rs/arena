@@ -70,10 +70,8 @@ impl Behavior<Message> for PoolAdmin {
                 let key = pool_creation.clone();
 
                 // will never panic as is always Some
-                let pool_manager = PoolManager::new(
-                    self.deployment.unwrap(),
-                    self.client.clone().unwrap(),
-                );
+                let pool_manager =
+                    PoolManager::new(self.deployment.unwrap(), self.client.clone().unwrap());
 
                 let tx = pool_manager.initialize(
                     pool_creation.key,

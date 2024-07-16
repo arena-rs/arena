@@ -66,8 +66,7 @@ impl Behavior<Message> for PriceChanger {
             }
         };
 
-        let liquid_exchange =
-            LiquidExchange::new(self.lex.unwrap(), self.client.clone().unwrap());
+        let liquid_exchange = LiquidExchange::new(self.lex.unwrap(), self.client.clone().unwrap());
 
         let tx = liquid_exchange.setPrice(alloy::primitives::utils::parse_ether(
             &self.process.step().to_string(),
