@@ -14,10 +14,6 @@ use octane::{
     AnvilProvider,
 };
 use serde::{Deserialize, Serialize};
-// use RustQuant::{
-//     models::*,
-//     stochastics::{process::Trajectories, *},
-// };
 
 use crate::{
     bindings::{
@@ -27,14 +23,16 @@ use crate::{
     },
     deployer::{Deployer, DeploymentRequest, DeploymentResponse},
     pool_admin::PoolParams,
-    // price_changer::PriceUpdate,
+    price_changer::PriceUpdate,
+    types::process::{OrnsteinUhlenbeck, StochasticProcess},
 };
 
-// pub mod arbitrageur;
+pub mod arbitrageur;
 pub mod bindings;
 pub mod deployer;
 pub mod pool_admin;
-// pub mod price_changer;
+pub mod price_changer;
+pub mod types;
 
 #[cfg(test)]
 mod tests {
@@ -59,13 +57,17 @@ mod tests {
             messager
                 .send(
                     To::Agent("deployer".to_string()),
-                    DeploymentRequest::Token { name: String::from("TEST"), symbol: String::from("TST"), decimals: 18 },
+                    DeploymentRequest::Token {
+                        name: String::from("TEST"),
+                        symbol: String::from("TST"),
+                        decimals: 18,
+                    },
                 )
                 .await?;
 
             self.client = Some(client.clone());
             self.messager = Some(messager.clone());
-        
+
             Ok(Some(messager.clone().stream().unwrap()))
         }
 
@@ -101,7 +103,10 @@ mod tests {
             messager: None,
             client: None,
         });
-        let mock_deployer = Agent::builder("mock_deployer").with_behavior(MockDeployer { client: None, messager: None });
+        let mock_deployer = Agent::builder("mock_deployer").with_behavior(MockDeployer {
+            client: None,
+            messager: None,
+        });
 
         let mut world = World::new("id");
 

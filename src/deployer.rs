@@ -47,7 +47,8 @@ impl Behavior<Message> for Deployer {
             .await
             .unwrap();
 
-        messager.clone()
+        messager
+            .clone()
             .send(
                 To::All,
                 DeploymentResponse::PoolManager(*pool_manager.address()),
