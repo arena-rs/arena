@@ -1,6 +1,4 @@
-use rand::prelude::*;
 use rand_distr::{Distribution, Normal};
-use super::*;
 
 pub trait StochasticProcess {
     type Value;

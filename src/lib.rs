@@ -1,16 +1,13 @@
-use std::{fmt, str::FromStr, sync::Arc};
+use std::{sync::Arc};
 
 use alloy::{
     primitives::{Address, Bytes, Uint, U256},
-    sol,
 };
 use anyhow::Result;
 use futures::stream::StreamExt;
 use octane::{
-    agent::Agent,
     machine::{Behavior, ControlFlow, EventStream},
     messenger::{Message, Messager, To},
-    world::World,
     AnvilProvider,
 };
 use serde::{Deserialize, Serialize};
@@ -21,7 +18,7 @@ use crate::{
         liquidexchange::LiquidExchange,
         poolmanager::{PoolManager, PoolManager::PoolKey},
     },
-    deployer::{Deployer, DeploymentRequest, DeploymentResponse},
+    deployer::{DeploymentRequest, DeploymentResponse},
     pool_admin::PoolParams,
     price_changer::PriceUpdate,
     types::process::{OrnsteinUhlenbeck, StochasticProcess},
@@ -37,6 +34,9 @@ pub mod types;
 #[cfg(test)]
 mod tests {
     use super::*;
+    use octane::agent::Agent;
+    use crate::deployer::Deployer;
+    use octane::world::World;
 
     #[derive(Debug, Serialize, Deserialize)]
     pub struct MockDeployer {
@@ -113,6 +113,6 @@ mod tests {
         world.add_agent(mock_deployer);
         world.add_agent(deployer);
 
-        world.run().await;
+        let _ = world.run().await;
     }
 }

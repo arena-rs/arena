@@ -71,7 +71,7 @@ impl Behavior<Message> for PoolAdmin {
 
                 // will never panic as is always Some
                 let pool_manager = PoolManager::new(
-                    self.deployment.clone().unwrap(),
+                    self.deployment.unwrap(),
                     self.client.clone().unwrap(),
                 );
 
