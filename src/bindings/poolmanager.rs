@@ -1722,7 +1722,7 @@ pub mod PoolManager {
     struct ModifyLiquidityParams { int24 tickLower; int24 tickUpper; int256 liquidityDelta; bytes32 salt; }
     ```*/
     #[allow(non_camel_case_types, non_snake_case)]
-    #[derive(Clone)]
+    #[derive(Clone, Default, Debug)]
     pub struct ModifyLiquidityParams {
         pub tickLower: <alloy::sol_types::sol_data::Int<24> as alloy::sol_types::SolType>::RustType,
         pub tickUpper: <alloy::sol_types::sol_data::Int<24> as alloy::sol_types::SolType>::RustType,

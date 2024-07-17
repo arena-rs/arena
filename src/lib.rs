@@ -14,7 +14,10 @@ use crate::{
     bindings::{
         arenatoken::ArenaToken,
         liquidexchange::LiquidExchange,
-        poolmanager::{PoolManager, PoolManager::PoolKey},
+        poolmanager::{
+            PoolManager,
+            PoolManager::{ModifyLiquidityParams, PoolKey},
+        },
     },
     deployer::{DeploymentRequest, DeploymentResponse},
     pool_admin::PoolParams,
@@ -25,6 +28,7 @@ use crate::{
 pub mod arbitrageur;
 pub mod bindings;
 pub mod deployer;
+pub mod liquidity_admin;
 pub mod pool_admin;
 pub mod price_changer;
 pub mod types;
@@ -56,8 +60,8 @@ mod tests {
                 .send(
                     To::Agent("deployer".to_string()),
                     DeploymentRequest::Token {
-                        name: String::from("TEST"),
-                        symbol: String::from("TST"),
+                        name: String::from("TEST0"),
+                        symbol: String::from("TST0"),
                         decimals: 18,
                     },
                 )
