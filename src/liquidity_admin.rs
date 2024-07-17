@@ -1,5 +1,3 @@
-use alloy::sol_types::sol_data::Int;
-
 use super::*;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -64,6 +62,13 @@ impl Behavior<Message> for LiquidityAdmin {
 
         ArenaToken::new(query.pool.currency1, self.client.clone().unwrap())
             .approve(self.deployment.unwrap(), Uint::MAX)
+            .send()
+            .await?
+            .watch()
+            .await?;
+
+        PoolManager::new(self.deployment.unwrap(), self.client.clone().unwrap())
+            .modifyLiquidity(query.pool, query.modification, Bytes::default())
             .send()
             .await?
             .watch()
