@@ -74,6 +74,8 @@ impl Behavior<Message> for PriceChanger {
 
         tx.send().await?.watch().await?;
 
+        println!("Price updated to: {}", self.process.current_value());
+
         Ok(ControlFlow::Continue)
     }
 }
