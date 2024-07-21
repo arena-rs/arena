@@ -32,17 +32,11 @@ contract LiquidExchange {
         price = price_;
     }
 
-    // Our admin lock
-    modifier onlyAdmin() {
-        require(msg.sender == admin, "Only admin can call this function");
-        _;
-    }
-
     event PriceChange(uint256 price);
     event Swap(address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOut, address to);
 
     // Admin only function to set the price of x in terms of y
-    function setPrice(uint256 _price) public onlyAdmin {
+    function setPrice(uint256 _price) public {
         price = _price;
         emit PriceChange(price);
     }

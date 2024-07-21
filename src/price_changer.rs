@@ -24,8 +24,31 @@ impl PriceChanger {
     }
 }
 
+use serde::{ser::SerializeStruct, Deserializer, Serializer};
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PriceUpdate;
+
+// impl Serialize for PriceUpdate {
+//     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+//     where
+//         S: Serializer,
+//     {
+//         let mut state = serializer.serialize_struct("PriceUpdate", 1)?;
+//         state.serialize_field("type", "PriceUpdate")?;
+//         state.end()
+//     }
+// }
+
+// impl<'de> Deserialize<'de> for PriceUpdate {
+//     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+//     where
+//         D: Deserializer<'de>,
+//     {
+//         serde::de::Deserialize::deserialize(deserializer)?;
+//         Ok(PriceUpdate)
+//     }
+// }
 
 #[async_trait::async_trait]
 impl Behavior<Message> for PriceChanger {
@@ -41,9 +64,12 @@ impl Behavior<Message> for PriceChanger {
 
         while let Some(event) = stream.next().await {
             let query: DeploymentResponse = match serde_json::from_str(&event.data) {
-                Ok(query) => query,
+                Ok(query) => {
+                    println!("heresd");
+                    query
+                }
                 Err(_) => {
-                    eprintln!("Failed to deserialize the event data into a DeploymentResponse");
+                    // eprintln!("Failed to deserialize the event datfa into a DeploymentResponse");
                     continue;
                 }
             };
@@ -58,7 +84,7 @@ impl Behavior<Message> for PriceChanger {
     }
 
     async fn process(&mut self, event: Message) -> Result<ControlFlow> {
-        let _query: PriceUpdate = match serde_json::from_str(&event.data) {
+        let query: PriceUpdate = match serde_json::from_str(&event.data) {
             Ok(query) => query,
             Err(_) => {
                 eprintln!("Failed to deserialize the event data into a PriceUpdate");

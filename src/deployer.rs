@@ -113,6 +113,7 @@ impl Behavior<Message> for Deployer {
                     .unwrap()
                     .send(To::All, DeploymentResponse::LiquidExchange(*lex.address()))
                     .await?;
+
                 Ok(ControlFlow::Continue)
             }
             _ => Ok(ControlFlow::Continue),

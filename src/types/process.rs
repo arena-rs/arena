@@ -1,4 +1,6 @@
+use rand::thread_rng;
 use rand_distr::{Distribution, Normal};
+use serde::{Deserialize, Serialize};
 
 pub trait StochasticProcess {
     type Value;
@@ -8,7 +10,7 @@ pub trait StochasticProcess {
     fn step(&mut self) -> Self::Value;
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct OrnsteinUhlenbeck {
     current_value: f64,
 
@@ -26,13 +28,13 @@ pub struct OrnsteinUhlenbeck {
 }
 
 impl OrnsteinUhlenbeck {
-    pub fn new(initial_value: f64, theta: f64, mu: f64, sigma: f64) -> Self {
+    pub fn new(initial_value: f64, theta: f64, mu: f64, sigma: f64, dt: f64) -> Self {
         OrnsteinUhlenbeck {
             current_value: initial_value,
             theta,
             mu,
             sigma,
-            dt: 0.0,
+            dt,
         }
     }
 }
@@ -45,13 +47,13 @@ impl StochasticProcess for OrnsteinUhlenbeck {
     }
 
     fn step(&mut self) -> Self::Value {
-        let mut rng = rand::thread_rng();
+        let mut rng = thread_rng();
         let normal = Normal::new(0.0, 1.0).unwrap();
 
         let drift = self.theta * (self.mu - self.current_value) * self.dt;
-        let randomness = self.sigma * (self.dt.sqrt()) * normal.sample(&mut rng);
-        self.current_value += drift + randomness;
+        let randomness = self.sigma * self.dt.sqrt() * normal.sample(&mut rng);
 
+        self.current_value += drift + randomness;
         self.current_value
     }
 }

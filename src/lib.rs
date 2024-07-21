@@ -21,10 +21,9 @@ use crate::{
     },
     deployer::{DeploymentRequest, DeploymentResponse},
     pool_admin::PoolParams,
-    price_changer::PriceUpdate,
+    price_changer::{PriceChanger, PriceUpdate},
     types::process::{OrnsteinUhlenbeck, StochasticProcess},
 };
-use crate::price_changer::PriceChanger;
 
 pub mod arbitrageur;
 pub mod bindings;
@@ -33,7 +32,6 @@ pub mod liquidity_admin;
 pub mod pool_admin;
 pub mod price_changer;
 pub mod types;
-
 
 #[cfg(test)]
 mod tests {
@@ -119,7 +117,7 @@ mod tests {
                 if let DeploymentResponse::Token(address) = query {
                     self.tokens.push(address);
                 }
-    
+
                 if self.tokens.len() == 2 {
                     break;
                 }
@@ -138,13 +136,24 @@ mod tests {
 
             println!("Tokens: {:?}", self.tokens);
 
-            for i in 0..100 {
-                messager
-                    .send(
-                        To::Agent("pricechanger".to_string()),
-                        PriceUpdate,
-                    )
-                    .await?;
+            use tokio::time::{sleep, Duration};
+
+            while let Some(event) = stream.next().await {
+                let query: DeploymentResponse = match serde_json::from_str(&event.data) {
+                    Ok(query) => query,
+                    Err(_) => {
+                        // eprintln!("Failed to deserialize the event datfa into a DeploymentResponse");
+                        continue;
+                    }
+                };
+
+                if let DeploymentResponse::LiquidExchange(address) = query {
+                    sleep(Duration::from_millis(3000)).await;
+                    println!("here");
+                    for i in 0..100 {
+                        messager.send(To::All, PriceUpdate).await?;
+                    }
+                }
             }
 
             self.client = Some(client.clone());
@@ -155,7 +164,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn asdfasdf() {
+    async fn test_price_changer() {
         env_logger::init();
 
         let token_deployer = Agent::builder("tdeployer").with_behavior(TokenDeployer {
@@ -174,14 +183,16 @@ mod tests {
             tokens: vec![],
         });
 
-        let changer = Agent::builder("pricechanger").with_behavior(PriceChanger::new(OrnsteinUhlenbeck::new(0.0, 0.1, 0.1, 0.1)));
+        let changer = Agent::builder("pricechanger").with_behavior(PriceChanger::new(
+            OrnsteinUhlenbeck::new(1.0, 0.15, 0.0, 0.3, 1.0 / 252.0),
+        ));
 
         let mut world = World::new("id");
 
+        world.add_agent(changer);
         world.add_agent(mock_deployer);
         world.add_agent(deployer);
         world.add_agent(token_deployer);
-        world.add_agent(changer);
 
         let _ = world.run().await;
     }
