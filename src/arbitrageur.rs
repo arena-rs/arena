@@ -26,18 +26,12 @@ impl Behavior<Message> for Arbitrageur {
         let mut stream = messager.clone().stream().unwrap();
 
         while let Some(event) = stream.next().await {
-            let query: DeploymentResponse = match serde_json::from_str(&event.data) {
-                Ok(query) => query,
-                Err(_) => {
-                    eprintln!("Failed to deserialize the event data into a DeploymentResponse");
-                    continue;
+            if let Ok(query) = serde_json::from_str::<DeploymentResponse>(&event.data) {
+                match query {
+                    DeploymentResponse::PoolManager(address) => self.deployment = Some(address),
+                    DeploymentResponse::Pool(params) => self.pool = Some(params),
+                    _ => {}
                 }
-            };
-
-            match query {
-                DeploymentResponse::PoolManager(address) => self.deployment = Some(address),
-                DeploymentResponse::Pool(params) => self.pool = Some(params),
-                _ => {}
             }
 
             if self.pool.is_some() && self.deployment.is_some() {

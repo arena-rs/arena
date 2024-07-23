@@ -5,11 +5,7 @@ use super::*;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PoolAdmin {
-    #[serde(skip)]
-    pub messager: Option<Messager>,
-
-    #[serde(skip)]
-    pub client: Option<Arc<AnvilProvider>>,
+    pub base: Base,
 
     pub deployment: Option<Address>,
 }
@@ -30,9 +26,6 @@ impl Behavior<Message> for PoolAdmin {
         client: Arc<AnvilProvider>,
         messager: Messager,
     ) -> Result<Option<EventStream<Message>>> {
-        self.client = Some(client.clone());
-        self.messager = Some(messager.clone());
-
         let mut stream = messager.clone().stream().unwrap();
 
         while let Some(event) = stream.next().await {
@@ -50,8 +43,8 @@ impl Behavior<Message> for PoolAdmin {
             }
         }
 
-        self.client = Some(client.clone());
-        self.messager = Some(messager.clone());
+        self.base.client = Some(client.clone());
+        self.base.messager = Some(messager.clone());
 
         Ok(Some(messager.clone().stream().unwrap()))
     }
@@ -71,7 +64,7 @@ impl Behavior<Message> for PoolAdmin {
 
                 // will never panic as is always Some
                 let pool_manager =
-                    PoolManager::new(self.deployment.unwrap(), self.client.clone().unwrap());
+                    PoolManager::new(self.deployment.unwrap(), self.base.client.clone().unwrap());
 
                 let tx = pool_manager.initialize(
                     pool_creation.key,
@@ -81,7 +74,8 @@ impl Behavior<Message> for PoolAdmin {
 
                 tx.send().await?.watch().await?;
 
-                self.messager
+                self.base
+                    .messager
                     .clone()
                     .unwrap()
                     .send(To::All, DeploymentResponse::Pool(key))

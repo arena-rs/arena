@@ -3,11 +3,9 @@ use rand_distr::{Distribution, Normal};
 use serde::{Deserialize, Serialize};
 
 pub trait StochasticProcess {
-    type Value;
+    fn current_value(&self) -> f64;
 
-    fn current_value(&self) -> Self::Value;
-
-    fn step(&mut self) -> Self::Value;
+    fn step(&mut self) -> f64;
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -40,13 +38,11 @@ impl OrnsteinUhlenbeck {
 }
 
 impl StochasticProcess for OrnsteinUhlenbeck {
-    type Value = f64;
-
-    fn current_value(&self) -> Self::Value {
+    fn current_value(&self) -> f64 {
         self.current_value
     }
 
-    fn step(&mut self) -> Self::Value {
+    fn step(&mut self) -> f64 {
         let mut rng = thread_rng();
         let normal = Normal::new(0.0, 1.0).unwrap();
 

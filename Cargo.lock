@@ -660,6 +660,7 @@ version = "0.1.0"
 dependencies = [
  "alloy",
  "alloy-sol-types",
+ "alloy-transport-http",
  "anyhow",
  "async-trait",
  "crossbeam-channel",

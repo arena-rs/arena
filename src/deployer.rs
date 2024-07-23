@@ -1,12 +1,8 @@
 use super::*;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Deployer {
-    #[serde(skip)]
-    pub messager: Option<Messager>,
-
-    #[serde(skip)]
-    pub client: Option<Arc<AnvilProvider>>,
+    pub base: Base,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -55,8 +51,8 @@ impl Behavior<Message> for Deployer {
             )
             .await?;
 
-        self.client = Some(client.clone());
-        self.messager = Some(messager.clone());
+        self.base.client = Some(client.clone());
+        self.base.messager = Some(messager.clone());
 
         Ok(Some(messager.stream().unwrap()))
     }
@@ -80,13 +76,14 @@ impl Behavior<Message> for Deployer {
                 decimals,
             } => {
                 let token =
-                    ArenaToken::deploy(self.client.clone().unwrap(), name, symbol, decimals)
+                    ArenaToken::deploy(self.base.client.clone().unwrap(), name, symbol, decimals)
                         .await
                         .unwrap();
 
                 println!("Token deployed at address: {:?}", token.address());
 
-                self.messager
+                self.base
+                    .messager
                     .clone()
                     .unwrap()
                     .send(To::All, DeploymentResponse::Token(*token.address()))
@@ -100,7 +97,7 @@ impl Behavior<Message> for Deployer {
                 initial_price,
             } => {
                 let lex = LiquidExchange::deploy(
-                    self.client.clone().unwrap(),
+                    self.base.client.clone().unwrap(),
                     token_0,
                     token_1,
                     U256::from((initial_price * 10f64.powf(18.0)) as u64),
@@ -108,7 +105,8 @@ impl Behavior<Message> for Deployer {
                 .await
                 .unwrap();
 
-                self.messager
+                self.base
+                    .messager
                     .clone()
                     .unwrap()
                     .send(To::All, DeploymentResponse::LiquidExchange(*lex.address()))

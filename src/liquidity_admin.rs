@@ -2,11 +2,7 @@ use super::*;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct LiquidityAdmin {
-    #[serde(skip)]
-    pub messager: Option<Messager>,
-
-    #[serde(skip)]
-    pub client: Option<Arc<AnvilProvider>>,
+    pub base: Base,
 
     pub deployment: Option<Address>,
 }
@@ -27,8 +23,8 @@ impl Behavior<Message> for LiquidityAdmin {
         client: Arc<AnvilProvider>,
         messager: Messager,
     ) -> Result<Option<EventStream<Message>>> {
-        self.client = Some(client.clone());
-        self.messager = Some(messager.clone());
+        self.base.client = Some(client.clone());
+        self.base.messager = Some(messager.clone());
 
         let mut stream = messager.clone().stream().unwrap();
 
@@ -53,21 +49,21 @@ impl Behavior<Message> for LiquidityAdmin {
             Err(_) => return Ok(ControlFlow::Continue),
         };
 
-        ArenaToken::new(query.pool.currency0, self.client.clone().unwrap())
+        ArenaToken::new(query.pool.currency0, self.base.client.clone().unwrap())
             .approve(self.deployment.unwrap(), Uint::MAX)
             .send()
             .await?
             .watch()
             .await?;
 
-        ArenaToken::new(query.pool.currency1, self.client.clone().unwrap())
+        ArenaToken::new(query.pool.currency1, self.base.client.clone().unwrap())
             .approve(self.deployment.unwrap(), Uint::MAX)
             .send()
             .await?
             .watch()
             .await?;
 
-        PoolManager::new(self.deployment.unwrap(), self.client.clone().unwrap())
+        PoolManager::new(self.deployment.unwrap(), self.base.client.clone().unwrap())
             .modifyLiquidity(query.pool, query.modification, Bytes::default())
             .send()
             .await?

@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{fmt::Debug, sync::Arc};
 
 use alloy::primitives::{Address, Bytes, Uint, U256};
 use anyhow::Result;
@@ -23,8 +23,8 @@ use crate::{
     pool_admin::PoolParams,
     price_changer::{PriceChanger, PriceUpdate},
     types::process::{OrnsteinUhlenbeck, StochasticProcess},
+    LiquidExchange::LiquidExchangeInstance,
 };
-
 pub mod arbitrageur;
 pub mod bindings;
 pub mod deployer;
@@ -32,6 +32,15 @@ pub mod liquidity_admin;
 pub mod pool_admin;
 pub mod price_changer;
 pub mod types;
+
+#[derive(Debug, Default, Deserialize, Serialize, Clone)]
+pub struct Base {
+    #[serde(skip)]
+    pub messager: Option<Messager>,
+
+    #[serde(skip)]
+    pub client: Option<Arc<AnvilProvider>>,
+}
 
 #[cfg(test)]
 mod tests {
@@ -172,10 +181,7 @@ mod tests {
             client: None,
         });
 
-        let deployer = Agent::builder("deployer").with_behavior(Deployer {
-            messager: None,
-            client: None,
-        });
+        let deployer = Agent::builder("deployer").with_behavior(Deployer::default());
 
         let mock_deployer = Agent::builder("mock_deployer").with_behavior(MockOrchestrator {
             client: None,
@@ -183,9 +189,10 @@ mod tests {
             tokens: vec![],
         });
 
-        let changer = Agent::builder("pricechanger").with_behavior(PriceChanger::new(
-            OrnsteinUhlenbeck::new(1.0, 0.15, 0.0, 0.3, 1.0 / 252.0),
-        ));
+        let changer =
+            Agent::builder("pricechanger").with_behavior(PriceChanger::<OrnsteinUhlenbeck>::new(
+                OrnsteinUhlenbeck::new(1.0, 0.15, 0.0, 0.3, 1.0 / 252.0),
+            ));
 
         let mut world = World::new("id");
 
