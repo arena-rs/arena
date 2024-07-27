@@ -22,7 +22,7 @@ use crate::{
     deployer::{DeploymentRequest, DeploymentResponse},
     pool_admin::PoolParams,
     price_changer::{PriceChanger, PriceUpdate},
-    types::process::{OrnsteinUhlenbeck, StochasticProcess},
+    types::process::{OrnsteinUhlenbeck, GeometricBrownianMotion, StochasticProcess},
     LiquidExchange::LiquidExchangeInstance,
 };
 pub mod arbitrageur;
@@ -190,8 +190,8 @@ mod tests {
         });
 
         let changer =
-            Agent::builder("pricechanger").with_behavior(PriceChanger::<OrnsteinUhlenbeck>::new(
-                OrnsteinUhlenbeck::new(1.0, 0.15, 0.0, 0.3, 1.0 / 252.0),
+            Agent::builder("pricechanger").with_behavior(PriceChanger::<GeometricBrownianMotion>::new(
+                GeometricBrownianMotion::new(1.0, 0.0, 0.3, 1.0 / 252.0),
             ));
 
         let mut world = World::new("id");

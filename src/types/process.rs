@@ -53,3 +53,47 @@ impl StochasticProcess for OrnsteinUhlenbeck {
         self.current_value
     }
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GeometricBrownianMotion {
+    initial_value: f64,
+    current_value: f64,
+    current_time: f64,
+    mu: f64,
+    sigma: f64,
+    dt: f64,
+}
+
+impl GeometricBrownianMotion {
+    pub fn new(initial_value: f64, mu: f64, sigma: f64, dt: f64) -> Self {
+        GeometricBrownianMotion {
+            initial_value,
+            current_value: initial_value,
+            current_time: 0.0,
+            mu,
+            sigma,
+            dt,
+        }
+    }
+}
+
+impl StochasticProcess for GeometricBrownianMotion {
+    fn current_value(&self) -> f64 {
+        self.current_value
+    }
+
+    fn step(&mut self) -> f64 {
+        let mut rng = thread_rng();
+        let normal = Normal::new(0.0, 1.0).unwrap();
+
+        let wiener_process = self.dt.sqrt() * normal.sample(&mut rng);
+        let drift = self.mu * self.current_time;
+        let volatility = self.sigma * wiener_process;
+
+        let change = drift + volatility;
+
+        self.current_time += self.dt;
+        self.current_value = self.initial_value * change.exp();
+        self.current_value
+    }
+}
