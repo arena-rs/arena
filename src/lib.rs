@@ -23,6 +23,7 @@ use crate::{
             PoolManager,
             PoolManager::{ModifyLiquidityParams, PoolKey},
         },
+        fetcher::Fetcher,
     },
     deployer::{DeploymentRequest, DeploymentResponse},
     pool_admin::PoolParams,

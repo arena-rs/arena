@@ -27,6 +27,7 @@ pub enum DeploymentResponse {
     Token(Address),
     LiquidExchange(Address),
     PoolManager(Address),
+    Fetcher(Address),
 
     // params pass through if deployment is successful
     Pool(PoolParams),
@@ -43,11 +44,23 @@ impl Behavior<Message> for Deployer {
             .await
             .unwrap();
 
+        let fetcher = Fetcher::deploy(client.clone())
+            .await
+            .unwrap();
+
         messager
             .clone()
             .send(
                 To::All,
                 DeploymentResponse::PoolManager(*pool_manager.address()),
+            )
+            .await?;
+
+        messager
+            .clone()
+            .send(
+                To::All,
+                DeploymentResponse::Fetcher(*fetcher.address()),
             )
             .await?;
 
