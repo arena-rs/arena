@@ -2,14 +2,8 @@ use super::*;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 struct Arbitrageur {
-    #[serde(skip)]
-    pub messager: Option<Messager>,
-
-    #[serde(skip)]
-    pub client: Option<Arc<AnvilProvider>>,
-
+    pub base: Base,
     pub deployment: Option<Address>,
-
     pub pool: Option<PoolParams>,
 }
 
@@ -20,8 +14,8 @@ impl Behavior<Message> for Arbitrageur {
         client: Arc<AnvilProvider>,
         messager: Messager,
     ) -> Result<Option<EventStream<Message>>> {
-        self.client = Some(client.clone());
-        self.messager = Some(messager.clone());
+        self.base.client = Some(client.clone());
+        self.base.messager = Some(messager.clone());
 
         let mut stream = messager.clone().stream().unwrap();
 
@@ -41,7 +35,6 @@ impl Behavior<Message> for Arbitrageur {
 
         Ok(Some(messager.clone().stream().unwrap()))
     }
-
     async fn process(&mut self, event: Message) -> Result<ControlFlow> {
         let _query: PriceUpdate = match serde_json::from_str(&event.data) {
             Ok(query) => query,
@@ -50,6 +43,10 @@ impl Behavior<Message> for Arbitrageur {
                 return Ok(ControlFlow::Continue);
             }
         };
+
+        let manager = PoolManager::new(self.deployment.unwrap(), self.base.client.clone().unwrap());
+
+        let id = keccak256(&self.pool.clone().unwrap().key.encode());
 
         return Ok(ControlFlow::Continue);
     }

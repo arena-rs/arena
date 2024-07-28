@@ -1,7 +1,12 @@
 use std::{fmt::Debug, sync::Arc};
 
-use alloy::primitives::{Address, Bytes, Uint, U256};
+use alloy::{
+    primitives::{keccak256, Address, Bytes, Uint, B256, U256},
+    rlp::Encodable,
+    sol_types::SolCall,
+};
 use anyhow::Result;
+use bytes::BufMut;
 use futures::stream::StreamExt;
 use octane::{
     machine::{Behavior, ControlFlow, EventStream},
@@ -25,6 +30,7 @@ use crate::{
     types::process::{OrnsteinUhlenbeck, StochasticProcess},
     LiquidExchange::LiquidExchangeInstance,
 };
+
 pub mod arbitrageur;
 pub mod bindings;
 pub mod deployer;
@@ -32,6 +38,22 @@ pub mod liquidity_admin;
 pub mod pool_admin;
 pub mod price_changer;
 pub mod types;
+
+impl PoolKey {
+    fn encode(self) -> Vec<u8> {
+        let mut encoded = Vec::new();
+
+        &self.currency0.encode(&mut encoded);
+        &self.currency1.encode(&mut encoded);
+
+        &U256::from(self.fee).encode(&mut encoded);
+        &U256::from(self.tickSpacing as u32).encode(&mut encoded);
+
+        &self.hooks.encode(&mut encoded);
+
+        encoded
+    }
+}
 
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
 pub struct Base {

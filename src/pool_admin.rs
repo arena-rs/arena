@@ -6,14 +6,13 @@ use super::*;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PoolAdmin {
     pub base: Base,
-
     pub deployment: Option<Address>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct PoolParams {
     #[serde(skip)]
-    key: PoolKey,
+    pub key: PoolKey,
 
     sqrt_price_x96: U256,
     hook_data: Bytes,
