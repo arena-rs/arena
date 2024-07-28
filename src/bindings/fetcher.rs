@@ -69,8 +69,9 @@ interface Fetcher {
 ```*/
 #[allow(non_camel_case_types, non_snake_case, clippy::style)]
 pub mod Fetcher {
-    use super::*;
     use alloy::sol_types as alloy_sol_types;
+
+    use super::*;
     /// The creation / init bytecode of the contract.
     ///
     /// ```text
@@ -95,30 +96,25 @@ pub mod Fetcher {
     const _: () = {
         use alloy::sol_types as alloy_sol_types;
         #[automatically_derived]
-        impl alloy_sol_types::private::SolTypeValue<PoolId>
-        for alloy::sol_types::private::FixedBytes<32> {
+        impl alloy_sol_types::private::SolTypeValue<PoolId> for alloy::sol_types::private::FixedBytes<32> {
             #[inline]
             fn stv_to_tokens(
                 &self,
-            ) -> <alloy::sol_types::sol_data::FixedBytes<
-                32,
-            > as alloy_sol_types::SolType>::Token<'_> {
+            ) -> <alloy::sol_types::sol_data::FixedBytes<32> as alloy_sol_types::SolType>::Token<'_>
+            {
                 alloy_sol_types::private::SolTypeValue::<
                     alloy::sol_types::sol_data::FixedBytes<32>,
                 >::stv_to_tokens(self)
             }
             #[inline]
             fn stv_eip712_data_word(&self) -> alloy_sol_types::Word {
-                <alloy::sol_types::sol_data::FixedBytes<
-                    32,
-                > as alloy_sol_types::SolType>::tokenize(self)
-                    .0
+                <alloy::sol_types::sol_data::FixedBytes<32> as alloy_sol_types::SolType>::tokenize(
+                    self,
+                )
+                .0
             }
             #[inline]
-            fn stv_abi_encode_packed_to(
-                &self,
-                out: &mut alloy_sol_types::private::Vec<u8>,
-            ) {
+            fn stv_abi_encode_packed_to(&self, out: &mut alloy_sol_types::private::Vec<u8>) {
                 <alloy::sol_types::sol_data::FixedBytes<
                     32,
                 > as alloy_sol_types::SolType>::abi_encode_packed_to(self, out)
@@ -154,9 +150,8 @@ pub mod Fetcher {
         #[automatically_derived]
         impl alloy_sol_types::SolType for PoolId {
             type RustType = alloy::sol_types::private::FixedBytes<32>;
-            type Token<'a> = <alloy::sol_types::sol_data::FixedBytes<
-                32,
-            > as alloy_sol_types::SolType>::Token<'a>;
+            type Token<'a> =
+                <alloy::sol_types::sol_data::FixedBytes<32> as alloy_sol_types::SolType>::Token<'a>;
             const SOL_NAME: &'static str = Self::NAME;
             const ENCODED_SIZE: Option<usize> = <alloy::sol_types::sol_data::FixedBytes<
                 32,
@@ -167,15 +162,15 @@ pub mod Fetcher {
             }
             #[inline]
             fn type_check(token: &Self::Token<'_>) -> alloy_sol_types::Result<()> {
-                <alloy::sol_types::sol_data::FixedBytes<
-                    32,
-                > as alloy_sol_types::SolType>::type_check(token)
+                <alloy::sol_types::sol_data::FixedBytes<32> as alloy_sol_types::SolType>::type_check(
+                    token,
+                )
             }
             #[inline]
             fn detokenize(token: Self::Token<'_>) -> Self::RustType {
-                <alloy::sol_types::sol_data::FixedBytes<
-                    32,
-                > as alloy_sol_types::SolType>::detokenize(token)
+                <alloy::sol_types::sol_data::FixedBytes<32> as alloy_sol_types::SolType>::detokenize(
+                    token,
+                )
             }
         }
         #[automatically_derived]
@@ -196,9 +191,7 @@ pub mod Fetcher {
                 > as alloy_sol_types::EventTopic>::encode_topic_preimage(rust, out)
             }
             #[inline]
-            fn encode_topic(
-                rust: &Self::RustType,
-            ) -> alloy_sol_types::abi::token::WordToken {
+            fn encode_topic(rust: &Self::RustType) -> alloy_sol_types::abi::token::WordToken {
                 <alloy::sol_types::sol_data::FixedBytes<
                     32,
                 > as alloy_sol_types::EventTopic>::encode_topic(rust)
@@ -206,9 +199,9 @@ pub mod Fetcher {
         }
     };
     /**Function with signature `POOLS_SLOT()` and selector `0x57eb1da7`.
-```solidity
-function POOLS_SLOT() external view returns (bytes32);
-```*/
+    ```solidity
+    function POOLS_SLOT() external view returns (bytes32);
+    ```*/
     #[allow(non_camel_case_types, non_snake_case)]
     #[derive(Clone)]
     pub struct POOLS_SLOTCall {}
@@ -228,9 +221,7 @@ function POOLS_SLOT() external view returns (bytes32);
             type UnderlyingRustTuple<'a> = ();
             #[cfg(test)]
             #[allow(dead_code, unreachable_patterns)]
-            fn _type_assertion(
-                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
-            ) {
+            fn _type_assertion(_t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>) {
                 match _t {
                     alloy_sol_types::private::AssertTypeEq::<
                         <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
@@ -259,9 +250,7 @@ function POOLS_SLOT() external view returns (bytes32);
             type UnderlyingRustTuple<'a> = (alloy::sol_types::private::FixedBytes<32>,);
             #[cfg(test)]
             #[allow(dead_code, unreachable_patterns)]
-            fn _type_assertion(
-                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
-            ) {
+            fn _type_assertion(_t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>) {
                 match _t {
                     alloy_sol_types::private::AssertTypeEq::<
                         <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
@@ -286,14 +275,10 @@ function POOLS_SLOT() external view returns (bytes32);
         #[automatically_derived]
         impl alloy_sol_types::SolCall for POOLS_SLOTCall {
             type Parameters<'a> = ();
-            type Token<'a> = <Self::Parameters<
-                'a,
-            > as alloy_sol_types::SolType>::Token<'a>;
+            type Token<'a> = <Self::Parameters<'a> as alloy_sol_types::SolType>::Token<'a>;
             type Return = POOLS_SLOTReturn;
             type ReturnTuple<'a> = (alloy::sol_types::sol_data::FixedBytes<32>,);
-            type ReturnToken<'a> = <Self::ReturnTuple<
-                'a,
-            > as alloy_sol_types::SolType>::Token<'a>;
+            type ReturnToken<'a> = <Self::ReturnTuple<'a> as alloy_sol_types::SolType>::Token<'a>;
             const SIGNATURE: &'static str = "POOLS_SLOT()";
             const SELECTOR: [u8; 4] = [87u8, 235u8, 29u8, 167u8];
             #[inline]
@@ -311,17 +296,17 @@ function POOLS_SLOT() external view returns (bytes32);
                 data: &[u8],
                 validate: bool,
             ) -> alloy_sol_types::Result<Self::Return> {
-                <Self::ReturnTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence(data, validate)
-                    .map(Into::into)
+                <Self::ReturnTuple<'_> as alloy_sol_types::SolType>::abi_decode_sequence(
+                    data, validate,
+                )
+                .map(Into::into)
             }
         }
     };
     /**Function with signature `getSlot0(address,bytes32)` and selector `0xe631bcbf`.
-```solidity
-function getSlot0(address manager, PoolId poolId) external view returns (uint160 sqrtPriceX96, int24 tick, uint24 protocolFee, uint24 lpFee);
-```*/
+    ```solidity
+    function getSlot0(address manager, PoolId poolId) external view returns (uint160 sqrtPriceX96, int24 tick, uint24 protocolFee, uint24 lpFee);
+    ```*/
     #[allow(non_camel_case_types, non_snake_case)]
     #[derive(Clone)]
     pub struct getSlot0Call {
@@ -332,18 +317,12 @@ function getSlot0(address manager, PoolId poolId) external view returns (uint160
     #[allow(non_camel_case_types, non_snake_case)]
     #[derive(Clone)]
     pub struct getSlot0Return {
-        pub sqrtPriceX96: <alloy::sol_types::sol_data::Uint<
-            160,
-        > as alloy::sol_types::SolType>::RustType,
-        pub tick: <alloy::sol_types::sol_data::Int<
-            24,
-        > as alloy::sol_types::SolType>::RustType,
-        pub protocolFee: <alloy::sol_types::sol_data::Uint<
-            24,
-        > as alloy::sol_types::SolType>::RustType,
-        pub lpFee: <alloy::sol_types::sol_data::Uint<
-            24,
-        > as alloy::sol_types::SolType>::RustType,
+        pub sqrtPriceX96:
+            <alloy::sol_types::sol_data::Uint<160> as alloy::sol_types::SolType>::RustType,
+        pub tick: <alloy::sol_types::sol_data::Int<24> as alloy::sol_types::SolType>::RustType,
+        pub protocolFee:
+            <alloy::sol_types::sol_data::Uint<24> as alloy::sol_types::SolType>::RustType,
+        pub lpFee: <alloy::sol_types::sol_data::Uint<24> as alloy::sol_types::SolType>::RustType,
     }
     #[allow(non_camel_case_types, non_snake_case, clippy::style)]
     const _: () = {
@@ -358,9 +337,7 @@ function getSlot0(address manager, PoolId poolId) external view returns (uint160
             );
             #[cfg(test)]
             #[allow(dead_code, unreachable_patterns)]
-            fn _type_assertion(
-                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
-            ) {
+            fn _type_assertion(_t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>) {
                 match _t {
                     alloy_sol_types::private::AssertTypeEq::<
                         <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
@@ -395,24 +372,14 @@ function getSlot0(address manager, PoolId poolId) external view returns (uint160
             );
             #[doc(hidden)]
             type UnderlyingRustTuple<'a> = (
-                <alloy::sol_types::sol_data::Uint<
-                    160,
-                > as alloy::sol_types::SolType>::RustType,
-                <alloy::sol_types::sol_data::Int<
-                    24,
-                > as alloy::sol_types::SolType>::RustType,
-                <alloy::sol_types::sol_data::Uint<
-                    24,
-                > as alloy::sol_types::SolType>::RustType,
-                <alloy::sol_types::sol_data::Uint<
-                    24,
-                > as alloy::sol_types::SolType>::RustType,
+                <alloy::sol_types::sol_data::Uint<160> as alloy::sol_types::SolType>::RustType,
+                <alloy::sol_types::sol_data::Int<24> as alloy::sol_types::SolType>::RustType,
+                <alloy::sol_types::sol_data::Uint<24> as alloy::sol_types::SolType>::RustType,
+                <alloy::sol_types::sol_data::Uint<24> as alloy::sol_types::SolType>::RustType,
             );
             #[cfg(test)]
             #[allow(dead_code, unreachable_patterns)]
-            fn _type_assertion(
-                _t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>,
-            ) {
+            fn _type_assertion(_t: alloy_sol_types::private::AssertTypeEq<UnderlyingRustTuple>) {
                 match _t {
                     alloy_sol_types::private::AssertTypeEq::<
                         <UnderlyingSolTuple as alloy_sol_types::SolType>::RustType,
@@ -423,7 +390,12 @@ function getSlot0(address manager, PoolId poolId) external view returns (uint160
             #[doc(hidden)]
             impl ::core::convert::From<getSlot0Return> for UnderlyingRustTuple<'_> {
                 fn from(value: getSlot0Return) -> Self {
-                    (value.sqrtPriceX96, value.tick, value.protocolFee, value.lpFee)
+                    (
+                        value.sqrtPriceX96,
+                        value.tick,
+                        value.protocolFee,
+                        value.lpFee,
+                    )
                 }
             }
             #[automatically_derived]
@@ -442,9 +414,7 @@ function getSlot0(address manager, PoolId poolId) external view returns (uint160
         #[automatically_derived]
         impl alloy_sol_types::SolCall for getSlot0Call {
             type Parameters<'a> = (alloy::sol_types::sol_data::Address, PoolId);
-            type Token<'a> = <Self::Parameters<
-                'a,
-            > as alloy_sol_types::SolType>::Token<'a>;
+            type Token<'a> = <Self::Parameters<'a> as alloy_sol_types::SolType>::Token<'a>;
             type Return = getSlot0Return;
             type ReturnTuple<'a> = (
                 alloy::sol_types::sol_data::Uint<160>,
@@ -452,9 +422,7 @@ function getSlot0(address manager, PoolId poolId) external view returns (uint160
                 alloy::sol_types::sol_data::Uint<24>,
                 alloy::sol_types::sol_data::Uint<24>,
             );
-            type ReturnToken<'a> = <Self::ReturnTuple<
-                'a,
-            > as alloy_sol_types::SolType>::Token<'a>;
+            type ReturnToken<'a> = <Self::ReturnTuple<'a> as alloy_sol_types::SolType>::Token<'a>;
             const SIGNATURE: &'static str = "getSlot0(address,bytes32)";
             const SELECTOR: [u8; 4] = [230u8, 49u8, 188u8, 191u8];
             #[inline]
@@ -477,10 +445,10 @@ function getSlot0(address manager, PoolId poolId) external view returns (uint160
                 data: &[u8],
                 validate: bool,
             ) -> alloy_sol_types::Result<Self::Return> {
-                <Self::ReturnTuple<
-                    '_,
-                > as alloy_sol_types::SolType>::abi_decode_sequence(data, validate)
-                    .map(Into::into)
+                <Self::ReturnTuple<'_> as alloy_sol_types::SolType>::abi_decode_sequence(
+                    data, validate,
+                )
+                .map(Into::into)
             }
         }
     };
@@ -497,10 +465,8 @@ function getSlot0(address manager, PoolId poolId) external view returns (uint160
         /// No guarantees are made about the order of the selectors.
         ///
         /// Prefer using `SolInterface` methods instead.
-        pub const SELECTORS: &'static [[u8; 4usize]] = &[
-            [87u8, 235u8, 29u8, 167u8],
-            [230u8, 49u8, 188u8, 191u8],
-        ];
+        pub const SELECTORS: &'static [[u8; 4usize]] =
+            &[[87u8, 235u8, 29u8, 167u8], [230u8, 49u8, 188u8, 191u8]];
     }
     #[automatically_derived]
     impl alloy_sol_types::SolInterface for FetcherCalls {
@@ -510,9 +476,7 @@ function getSlot0(address manager, PoolId poolId) external view returns (uint160
         #[inline]
         fn selector(&self) -> [u8; 4] {
             match self {
-                Self::POOLS_SLOT(_) => {
-                    <POOLS_SLOTCall as alloy_sol_types::SolCall>::SELECTOR
-                }
+                Self::POOLS_SLOT(_) => <POOLS_SLOTCall as alloy_sol_types::SolCall>::SELECTOR,
                 Self::getSlot0(_) => <getSlot0Call as alloy_sol_types::SolCall>::SELECTOR,
             }
         }
@@ -531,19 +495,13 @@ function getSlot0(address manager, PoolId poolId) external view returns (uint160
             data: &[u8],
             validate: bool,
         ) -> alloy_sol_types::Result<Self> {
-            static DECODE_SHIMS: &[fn(
-                &[u8],
-                bool,
-            ) -> alloy_sol_types::Result<FetcherCalls>] = &[
+            static DECODE_SHIMS: &[fn(&[u8], bool) -> alloy_sol_types::Result<FetcherCalls>] = &[
                 {
                     fn POOLS_SLOT(
                         data: &[u8],
                         validate: bool,
                     ) -> alloy_sol_types::Result<FetcherCalls> {
-                        <POOLS_SLOTCall as alloy_sol_types::SolCall>::abi_decode_raw(
-                                data,
-                                validate,
-                            )
+                        <POOLS_SLOTCall as alloy_sol_types::SolCall>::abi_decode_raw(data, validate)
                             .map(FetcherCalls::POOLS_SLOT)
                     }
                     POOLS_SLOT
@@ -553,22 +511,17 @@ function getSlot0(address manager, PoolId poolId) external view returns (uint160
                         data: &[u8],
                         validate: bool,
                     ) -> alloy_sol_types::Result<FetcherCalls> {
-                        <getSlot0Call as alloy_sol_types::SolCall>::abi_decode_raw(
-                                data,
-                                validate,
-                            )
+                        <getSlot0Call as alloy_sol_types::SolCall>::abi_decode_raw(data, validate)
                             .map(FetcherCalls::getSlot0)
                     }
                     getSlot0
                 },
             ];
             let Ok(idx) = Self::SELECTORS.binary_search(&selector) else {
-                return Err(
-                    alloy_sol_types::Error::unknown_selector(
-                        <Self as alloy_sol_types::SolInterface>::NAME,
-                        selector,
-                    ),
-                );
+                return Err(alloy_sol_types::Error::unknown_selector(
+                    <Self as alloy_sol_types::SolInterface>::NAME,
+                    selector,
+                ));
             };
             (unsafe { DECODE_SHIMS.get_unchecked(idx) })(data, validate)
         }
@@ -587,16 +540,10 @@ function getSlot0(address manager, PoolId poolId) external view returns (uint160
         fn abi_encode_raw(&self, out: &mut alloy_sol_types::private::Vec<u8>) {
             match self {
                 Self::POOLS_SLOT(inner) => {
-                    <POOLS_SLOTCall as alloy_sol_types::SolCall>::abi_encode_raw(
-                        inner,
-                        out,
-                    )
+                    <POOLS_SLOTCall as alloy_sol_types::SolCall>::abi_encode_raw(inner, out)
                 }
                 Self::getSlot0(inner) => {
-                    <getSlot0Call as alloy_sol_types::SolCall>::abi_encode_raw(
-                        inner,
-                        out,
-                    )
+                    <getSlot0Call as alloy_sol_types::SolCall>::abi_encode_raw(inner, out)
                 }
             }
         }
@@ -604,7 +551,7 @@ function getSlot0(address manager, PoolId poolId) external view returns (uint160
     use alloy::contract as alloy_contract;
     /**Creates a new wrapper around an on-chain [`Fetcher`](self) contract instance.
 
-See the [wrapper's documentation](`FetcherInstance`) for more details.*/
+    See the [wrapper's documentation](`FetcherInstance`) for more details.*/
     #[inline]
     pub const fn new<
         T: alloy_contract::private::Transport + ::core::clone::Clone,
@@ -618,9 +565,9 @@ See the [wrapper's documentation](`FetcherInstance`) for more details.*/
     }
     /**Deploys this contract using the given `provider` and constructor arguments, if any.
 
-Returns a new instance of the contract, if the deployment was successful.
+    Returns a new instance of the contract, if the deployment was successful.
 
-For more fine-grained control over the deployment process, use [`deploy_builder`] instead.*/
+    For more fine-grained control over the deployment process, use [`deploy_builder`] instead.*/
     #[inline]
     pub fn deploy<
         T: alloy_contract::private::Transport + ::core::clone::Clone,
@@ -628,35 +575,36 @@ For more fine-grained control over the deployment process, use [`deploy_builder`
         N: alloy_contract::private::Network,
     >(
         provider: P,
-    ) -> impl ::core::future::Future<
-        Output = alloy_contract::Result<FetcherInstance<T, P, N>>,
-    > {
+    ) -> impl ::core::future::Future<Output = alloy_contract::Result<FetcherInstance<T, P, N>>>
+    {
         FetcherInstance::<T, P, N>::deploy(provider)
     }
     /**Creates a `RawCallBuilder` for deploying this contract using the given `provider`
-and constructor arguments, if any.
+    and constructor arguments, if any.
 
-This is a simple wrapper around creating a `RawCallBuilder` with the data set to
-the bytecode concatenated with the constructor's ABI-encoded arguments.*/
+    This is a simple wrapper around creating a `RawCallBuilder` with the data set to
+    the bytecode concatenated with the constructor's ABI-encoded arguments.*/
     #[inline]
     pub fn deploy_builder<
         T: alloy_contract::private::Transport + ::core::clone::Clone,
         P: alloy_contract::private::Provider<T, N>,
         N: alloy_contract::private::Network,
-    >(provider: P) -> alloy_contract::RawCallBuilder<T, P, N> {
+    >(
+        provider: P,
+    ) -> alloy_contract::RawCallBuilder<T, P, N> {
         FetcherInstance::<T, P, N>::deploy_builder(provider)
     }
     /**A [`Fetcher`](self) instance.
 
-Contains type-safe methods for interacting with an on-chain instance of the
-[`Fetcher`](self) contract located at a given `address`, using a given
-provider `P`.
+    Contains type-safe methods for interacting with an on-chain instance of the
+    [`Fetcher`](self) contract located at a given `address`, using a given
+    provider `P`.
 
-If the contract bytecode is available (see the [`sol!`](alloy_sol_types::sol!)
-documentation on how to provide it), the `deploy` and `deploy_builder` methods can
-be used to deploy a new instance of the contract.
+    If the contract bytecode is available (see the [`sol!`](alloy_sol_types::sol!)
+    documentation on how to provide it), the `deploy` and `deploy_builder` methods can
+    be used to deploy a new instance of the contract.
 
-See the [module-level documentation](self) for all the available methods.*/
+    See the [module-level documentation](self) for all the available methods.*/
     #[derive(Clone)]
     pub struct FetcherInstance<T, P, N = alloy_contract::private::Ethereum> {
         address: alloy_sol_types::private::Address,
@@ -667,24 +615,24 @@ See the [module-level documentation](self) for all the available methods.*/
     impl<T, P, N> ::core::fmt::Debug for FetcherInstance<T, P, N> {
         #[inline]
         fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-            f.debug_tuple("FetcherInstance").field(&self.address).finish()
+            f.debug_tuple("FetcherInstance")
+                .field(&self.address)
+                .finish()
         }
     }
     /// Instantiation and getters/setters.
     #[automatically_derived]
     impl<
-        T: alloy_contract::private::Transport + ::core::clone::Clone,
-        P: alloy_contract::private::Provider<T, N>,
-        N: alloy_contract::private::Network,
-    > FetcherInstance<T, P, N> {
+            T: alloy_contract::private::Transport + ::core::clone::Clone,
+            P: alloy_contract::private::Provider<T, N>,
+            N: alloy_contract::private::Network,
+        > FetcherInstance<T, P, N>
+    {
         /**Creates a new wrapper around an on-chain [`Fetcher`](self) contract instance.
 
-See the [wrapper's documentation](`FetcherInstance`) for more details.*/
+        See the [wrapper's documentation](`FetcherInstance`) for more details.*/
         #[inline]
-        pub const fn new(
-            address: alloy_sol_types::private::Address,
-            provider: P,
-        ) -> Self {
+        pub const fn new(address: alloy_sol_types::private::Address, provider: P) -> Self {
             Self {
                 address,
                 provider,
@@ -693,22 +641,20 @@ See the [wrapper's documentation](`FetcherInstance`) for more details.*/
         }
         /**Deploys this contract using the given `provider` and constructor arguments, if any.
 
-Returns a new instance of the contract, if the deployment was successful.
+        Returns a new instance of the contract, if the deployment was successful.
 
-For more fine-grained control over the deployment process, use [`deploy_builder`] instead.*/
+        For more fine-grained control over the deployment process, use [`deploy_builder`] instead.*/
         #[inline]
-        pub async fn deploy(
-            provider: P,
-        ) -> alloy_contract::Result<FetcherInstance<T, P, N>> {
+        pub async fn deploy(provider: P) -> alloy_contract::Result<FetcherInstance<T, P, N>> {
             let call_builder = Self::deploy_builder(provider);
             let contract_address = call_builder.deploy().await?;
             Ok(Self::new(contract_address, call_builder.provider))
         }
         /**Creates a `RawCallBuilder` for deploying this contract using the given `provider`
-and constructor arguments, if any.
+        and constructor arguments, if any.
 
-This is a simple wrapper around creating a `RawCallBuilder` with the data set to
-the bytecode concatenated with the constructor's ABI-encoded arguments.*/
+        This is a simple wrapper around creating a `RawCallBuilder` with the data set to
+        the bytecode concatenated with the constructor's ABI-encoded arguments.*/
         #[inline]
         pub fn deploy_builder(provider: P) -> alloy_contract::RawCallBuilder<T, P, N> {
             alloy_contract::RawCallBuilder::new_raw_deploy(
@@ -751,10 +697,11 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
     /// Function calls.
     #[automatically_derived]
     impl<
-        T: alloy_contract::private::Transport + ::core::clone::Clone,
-        P: alloy_contract::private::Provider<T, N>,
-        N: alloy_contract::private::Network,
-    > FetcherInstance<T, P, N> {
+            T: alloy_contract::private::Transport + ::core::clone::Clone,
+            P: alloy_contract::private::Provider<T, N>,
+            N: alloy_contract::private::Network,
+        > FetcherInstance<T, P, N>
+    {
         /// Creates a new call builder using this contract instance's provider and address.
         ///
         /// Note that the call can be any function call, not just those defined in this
@@ -766,9 +713,7 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
             alloy_contract::SolCallBuilder::new_sol(&self.provider, &self.address, call)
         }
         ///Creates a new call builder for the [`POOLS_SLOT`] function.
-        pub fn POOLS_SLOT(
-            &self,
-        ) -> alloy_contract::SolCallBuilder<T, &P, POOLS_SLOTCall, N> {
+        pub fn POOLS_SLOT(&self) -> alloy_contract::SolCallBuilder<T, &P, POOLS_SLOTCall, N> {
             self.call_builder(&POOLS_SLOTCall {})
         }
         ///Creates a new call builder for the [`getSlot0`] function.
@@ -783,10 +728,11 @@ the bytecode concatenated with the constructor's ABI-encoded arguments.*/
     /// Event filters.
     #[automatically_derived]
     impl<
-        T: alloy_contract::private::Transport + ::core::clone::Clone,
-        P: alloy_contract::private::Provider<T, N>,
-        N: alloy_contract::private::Network,
-    > FetcherInstance<T, P, N> {
+            T: alloy_contract::private::Transport + ::core::clone::Clone,
+            P: alloy_contract::private::Provider<T, N>,
+            N: alloy_contract::private::Network,
+        > FetcherInstance<T, P, N>
+    {
         /// Creates a new event filter using this contract instance's provider and address.
         ///
         /// Note that the type can be any event, not just those defined in this contract.

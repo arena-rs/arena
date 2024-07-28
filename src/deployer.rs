@@ -44,9 +44,7 @@ impl Behavior<Message> for Deployer {
             .await
             .unwrap();
 
-        let fetcher = Fetcher::deploy(client.clone())
-            .await
-            .unwrap();
+        let fetcher = Fetcher::deploy(client.clone()).await.unwrap();
 
         messager
             .clone()
@@ -58,10 +56,7 @@ impl Behavior<Message> for Deployer {
 
         messager
             .clone()
-            .send(
-                To::All,
-                DeploymentResponse::Fetcher(*fetcher.address()),
-            )
+            .send(To::All, DeploymentResponse::Fetcher(*fetcher.address()))
             .await?;
 
         self.base.client = Some(client.clone());

@@ -5,6 +5,7 @@ struct Arbitrageur {
     pub base: Base,
     pub deployment: Option<Address>,
     pub pool: Option<PoolParams>,
+    pub fetcher: Option<Address>,
 }
 
 #[async_trait::async_trait]
@@ -24,11 +25,12 @@ impl Behavior<Message> for Arbitrageur {
                 match query {
                     DeploymentResponse::PoolManager(address) => self.deployment = Some(address),
                     DeploymentResponse::Pool(params) => self.pool = Some(params),
+                    DeploymentResponse::Fetcher(address) => self.fetcher = Some(address),
                     _ => {}
                 }
             }
 
-            if self.pool.is_some() && self.deployment.is_some() {
+            if self.pool.is_some() && self.deployment.is_some() && self.fetcher.is_some() {
                 break;
             }
         }
@@ -45,8 +47,16 @@ impl Behavior<Message> for Arbitrageur {
         };
 
         let manager = PoolManager::new(self.deployment.unwrap(), self.base.client.clone().unwrap());
+        let fetcher = Fetcher::new(self.fetcher.unwrap(), self.base.client.clone().unwrap());
 
         let id = keccak256(&self.pool.clone().unwrap().key.encode());
+
+        let slot0 = fetcher
+            .getSlot0(*manager.address(), id)
+            .send()
+            .await?
+            .watch()
+            .await?;
 
         return Ok(ControlFlow::Continue);
     }

@@ -18,12 +18,12 @@ use serde::{Deserialize, Serialize};
 use crate::{
     bindings::{
         arenatoken::ArenaToken,
+        fetcher::Fetcher,
         liquidexchange::LiquidExchange,
         poolmanager::{
             PoolManager,
             PoolManager::{ModifyLiquidityParams, PoolKey},
         },
-        fetcher::Fetcher,
     },
     deployer::{DeploymentRequest, DeploymentResponse},
     pool_admin::PoolParams,
