@@ -8,8 +8,8 @@ Track how metrics evolve over time, and over various market conditions.
 
 Arena uses a modified version of [Arbiter](https://github.com/primitivefinance/arbiter) engine called [octane](https://github.com/arena-rs/octane), which alloys the usage of [alloy](https://alloy.rs/) and anvil for simulation. An agent-oriented architecture is utilized.
 
-- [ ] Deployer agent.
-- [ ] Pool admin agent.
+- [x] Deployer agent.
+- [x] Pool admin agent.
 - [ ] Arbitrageur agent.  
 
 ## Initial goals
