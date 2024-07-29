@@ -1948,7 +1948,7 @@ pub mod PoolManager {
     struct PoolKey { Currency currency0; Currency currency1; uint24 fee; int24 tickSpacing; address hooks; }
     ```*/
     #[allow(non_camel_case_types, non_snake_case)]
-    #[derive(Clone, Debug, Default)]
+    #[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
     pub struct PoolKey {
         pub currency0: <Currency as alloy::sol_types::SolType>::RustType,
         pub currency1: <Currency as alloy::sol_types::SolType>::RustType,

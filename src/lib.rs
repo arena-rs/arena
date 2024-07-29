@@ -1,4 +1,4 @@
-use std::{fmt::Debug, sync::Arc, str::FromStr};
+use std::{fmt::Debug, str::FromStr, sync::Arc};
 
 use alloy::{
     primitives::{keccak256, Address, Bytes, Uint, B256, U256},
@@ -26,17 +26,16 @@ use crate::{
         },
     },
     deployer::{DeploymentRequest, DeploymentResponse},
-    pool_admin::PoolParams,
     price_changer::{PriceChanger, PriceUpdate},
     types::process::{OrnsteinUhlenbeck, StochasticProcess},
     LiquidExchange::LiquidExchangeInstance,
 };
+use crate::deployer::PoolParams;
 
 pub mod arbitrageur;
 pub mod bindings;
 pub mod deployer;
 pub mod liquidity_admin;
-pub mod pool_admin;
 pub mod price_changer;
 pub mod types;
 
@@ -135,6 +134,7 @@ mod tests {
                 }
 
                 if self.tokens.len() == 2 {
+                    println!("Tokens: {:?}", self.tokens);
                     break;
                 }
             }
@@ -143,8 +143,8 @@ mod tests {
                 .send(
                     To::Agent("deployer".to_string()),
                     DeploymentRequest::LiquidExchange {
-                        token_0: self.tokens[0],
-                        token_1: self.tokens[1],
+                        token_0: self.tokens[0].clone(),
+                        token_1: self.tokens[1].clone(),
                         initial_price: 1.0,
                     },
                 )
@@ -153,20 +153,21 @@ mod tests {
             let key = PoolKey {
                 currency0: self.tokens[0],
                 currency1: self.tokens[1],
-                fee: 10,
-                tickSpacing: 2,
+                fee: 3000,
+                tickSpacing: 60,
                 hooks: Address::default(),
             };
 
             messager
-                .send(To::All, DeploymentRequest::Pool(PoolParams {
-                    key,
-                    sqrt_price_x96: U256::from_str("79228162514264337593543950336").unwrap(),
-                    hook_data: Bytes::default(),
-                }))
+                .send(
+                    To::All,
+                    DeploymentRequest::Pool(PoolParams {
+                        key,
+                        sqrt_price_x96: U256::from_str("79228162514264337593543950336").unwrap(),
+                        hook_data: Bytes::default(),
+                    }),
+                )
                 .await?;
-
-            println!("Tokens: {:?}", self.tokens);
 
             use tokio::time::{sleep, Duration};
 

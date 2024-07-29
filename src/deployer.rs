@@ -3,7 +3,17 @@ use super::*;
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Deployer {
     pub base: Base,
+    pub manager: Option<Address>,
 }
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct PoolParams {
+    pub key: PoolKey,
+
+    pub sqrt_price_x96: U256,
+    pub hook_data: Bytes,
+}
+
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub enum DeploymentRequest {
@@ -45,6 +55,8 @@ impl Behavior<Message> for Deployer {
             .unwrap();
 
         let fetcher = Fetcher::deploy(client.clone()).await.unwrap();
+
+        self.manager = Some(*pool_manager.address());
 
         messager
             .clone()
@@ -118,6 +130,32 @@ impl Behavior<Message> for Deployer {
                     .clone()
                     .unwrap()
                     .send(To::All, DeploymentResponse::LiquidExchange(*lex.address()))
+                    .await?;
+
+                Ok(ControlFlow::Continue)
+            }
+            DeploymentRequest::Pool(pool_creation) => {
+                let key = pool_creation.clone();
+
+                // will never panic as is always Some
+                let pool_manager =
+                    PoolManager::new(self.manager.unwrap(), self.base.client.clone().unwrap());
+
+                let tx = pool_manager.initialize(
+                    key.clone().key,
+                    key.clone().sqrt_price_x96,
+                    key.clone().hook_data,
+                );
+
+                println!("tx: {:#?}", tx);
+
+                tx.send().await?.watch().await?;
+
+                self.base
+                    .messager
+                    .clone()
+                    .unwrap()
+                    .send(To::All, DeploymentResponse::Pool(key))
                     .await?;
 
                 Ok(ControlFlow::Continue)

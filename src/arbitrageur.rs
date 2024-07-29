@@ -24,7 +24,10 @@ impl Behavior<Message> for Arbitrageur {
             if let Ok(query) = serde_json::from_str::<DeploymentResponse>(&event.data) {
                 match query {
                     DeploymentResponse::PoolManager(address) => self.deployment = Some(address),
-                    DeploymentResponse::Pool(params) => self.pool = Some(params),
+                    DeploymentResponse::Pool(params) => {
+                        println!("FINALLY GOT HERE");
+                        self.pool = Some(params)
+                    }
                     DeploymentResponse::Fetcher(address) => self.fetcher = Some(address),
                     _ => {}
                 }
@@ -51,12 +54,17 @@ impl Behavior<Message> for Arbitrageur {
 
         let fetcher_key = FetcherPoolKey {
             currency0: self.pool.clone().unwrap().key.currency0,
-            currency1: self.pool.clone().unwrap().key.currency0,
+            currency1: self.pool.clone().unwrap().key.currency1,
             fee: self.pool.clone().unwrap().key.fee,
             tickSpacing: self.pool.clone().unwrap().key.tickSpacing,
             hooks: self.pool.clone().unwrap().key.hooks,
         };
+
+        println!("key: {:#?}", fetcher_key);
+
         let id = fetcher.toId(fetcher_key).call().await?.poolId;
+
+        // println!("id: {:?}", id);
 
         let get_slot0_return = fetcher
             .getSlot0(manager.address().clone(), id)
