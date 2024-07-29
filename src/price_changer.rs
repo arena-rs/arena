@@ -13,9 +13,7 @@ where
     T: StochasticProcess,
 {
     pub base: Base,
-
     pub process: T,
-
     pub lex: Option<Address>,
 }
 

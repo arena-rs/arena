@@ -3,7 +3,17 @@ use super::*;
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Deployer {
     pub base: Base,
+    pub manager: Option<Address>,
 }
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct PoolParams {
+    pub key: PoolKey,
+
+    pub sqrt_price_x96: U256,
+    pub hook_data: Bytes,
+}
+
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub enum DeploymentRequest {
@@ -27,6 +37,7 @@ pub enum DeploymentResponse {
     Token(Address),
     LiquidExchange(Address),
     PoolManager(Address),
+    Fetcher(Address),
 
     // params pass through if deployment is successful
     Pool(PoolParams),
@@ -43,12 +54,21 @@ impl Behavior<Message> for Deployer {
             .await
             .unwrap();
 
+        let fetcher = Fetcher::deploy(client.clone()).await.unwrap();
+
+        self.manager = Some(*pool_manager.address());
+
         messager
             .clone()
             .send(
                 To::All,
                 DeploymentResponse::PoolManager(*pool_manager.address()),
             )
+            .await?;
+
+        messager
+            .clone()
+            .send(To::All, DeploymentResponse::Fetcher(*fetcher.address()))
             .await?;
 
         self.base.client = Some(client.clone());
@@ -114,93 +134,33 @@ impl Behavior<Message> for Deployer {
 
                 Ok(ControlFlow::Continue)
             }
+            DeploymentRequest::Pool(pool_creation) => {
+                let key = pool_creation.clone();
+
+                // will never panic as is always Some
+                let pool_manager =
+                    PoolManager::new(self.manager.unwrap(), self.base.client.clone().unwrap());
+
+                let tx = pool_manager.initialize(
+                    key.clone().key,
+                    key.clone().sqrt_price_x96,
+                    key.clone().hook_data,
+                );
+
+                println!("tx: {:#?}", tx);
+
+                tx.send().await?.watch().await?;
+
+                self.base
+                    .messager
+                    .clone()
+                    .unwrap()
+                    .send(To::All, DeploymentResponse::Pool(key))
+                    .await?;
+
+                Ok(ControlFlow::Continue)
+            }
             _ => Ok(ControlFlow::Continue),
         }
     }
 }
-
-// #[cfg(test)]
-// mod tests {
-//     use octane::{agent::Agent, world::World};
-
-//     use super::*;
-//     use crate::deployer::Deployer;
-
-//     #[derive(Debug, Serialize, Deserialize)]
-//     pub struct MockDeployer {
-//         #[serde(skip)]
-//         pub messager: Option<Messager>,
-
-//         #[serde(skip)]
-//         pub client: Option<Arc<AnvilProvider>>,
-//     }
-
-//     #[async_trait::async_trait]
-//     impl Behavior<Message> for MockDeployer {
-//         async fn startup(
-//             &mut self,
-//             client: Arc<AnvilProvider>,
-//             messager: Messager,
-//         ) -> Result<Option<EventStream<Message>>> {
-//             messager
-//                 .send(
-//                     To::Agent("deployer".to_string()),
-//                     DeploymentRequest::Token {
-//                         name: String::from("TEST0"),
-//                         symbol: String::from("TST0"),
-//                         decimals: 18,
-//                     },
-//                 )
-//                 .await?;
-
-//             self.client = Some(client.clone());
-//             self.messager = Some(messager.clone());
-
-//             Ok(Some(messager.clone().stream().unwrap()))
-//         }
-
-//         async fn process(&mut self, event: Message) -> Result<ControlFlow> {
-//             let query: DeploymentResponse = match serde_json::from_str(&event.data) {
-//                 Ok(query) => query,
-//                 Err(_) => {
-//                     eprintln!("Failed to deserialize the event data into a DeploymentResponse");
-//                     return Ok(ControlFlow::Continue);
-//                 }
-//             };
-
-//             match query {
-//                 DeploymentResponse::Token(address) => {
-//                     let tok = ArenaToken::new(address, self.client.clone().unwrap());
-
-//                     assert_eq!(tok.name().call().await.unwrap()._0, "TEST");
-//                     assert_eq!(tok.symbol().call().await.unwrap()._0, "TST");
-//                     assert_eq!(tok.decimals().call().await.unwrap()._0, 18);
-//                 }
-//                 _ => {}
-//             }
-
-//             Ok(ControlFlow::Continue)
-//         }
-//     }
-
-//     #[tokio::test]
-//     async fn test_deployer() {
-//         // env_logger::init();
-
-//         let deployer = Agent::builder("deployer").with_behavior(Deployer {
-//             messager: None,
-//             client: None,
-//         });
-//         let mock_deployer = Agent::builder("mock_deployer").with_behavior(MockDeployer {
-//             client: None,
-//             messager: None,
-//         });
-
-//         let mut world = World::new("id");
-
-//         world.add_agent(mock_deployer);
-//         world.add_agent(deployer);
-
-//         let _ = world.run().await;
-//     }
-// }

@@ -1,6 +1,10 @@
-use std::{fmt::Debug, sync::Arc};
+use std::{fmt::Debug, str::FromStr, sync::Arc};
 
-use alloy::primitives::{Address, Bytes, Uint, U256};
+use alloy::{
+    primitives::{keccak256, Address, Bytes, Uint, B256, U256},
+    rlp::Encodable,
+    sol_types::SolCall,
+};
 use anyhow::Result;
 use futures::stream::StreamExt;
 use octane::{
@@ -11,8 +15,10 @@ use octane::{
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    arbitrageur::Arbitrageur,
     bindings::{
         arenatoken::ArenaToken,
+        fetcher::{Fetcher, Fetcher::PoolKey as FetcherPoolKey},
         liquidexchange::LiquidExchange,
         poolmanager::{
             PoolManager,
@@ -20,16 +26,16 @@ use crate::{
         },
     },
     deployer::{DeploymentRequest, DeploymentResponse},
-    pool_admin::PoolParams,
     price_changer::{PriceChanger, PriceUpdate},
     types::process::{OrnsteinUhlenbeck, GeometricBrownianMotion, StochasticProcess},
     LiquidExchange::LiquidExchangeInstance,
 };
+use crate::deployer::PoolParams;
+
 pub mod arbitrageur;
 pub mod bindings;
 pub mod deployer;
 pub mod liquidity_admin;
-pub mod pool_admin;
 pub mod price_changer;
 pub mod types;
 
@@ -128,6 +134,7 @@ mod tests {
                 }
 
                 if self.tokens.len() == 2 {
+                    println!("Tokens: {:?}", self.tokens);
                     break;
                 }
             }
@@ -136,14 +143,31 @@ mod tests {
                 .send(
                     To::Agent("deployer".to_string()),
                     DeploymentRequest::LiquidExchange {
-                        token_0: self.tokens[0],
-                        token_1: self.tokens[1],
+                        token_0: self.tokens[0].clone(),
+                        token_1: self.tokens[1].clone(),
                         initial_price: 1.0,
                     },
                 )
                 .await?;
 
-            println!("Tokens: {:?}", self.tokens);
+            let key = PoolKey {
+                currency0: self.tokens[0],
+                currency1: self.tokens[1],
+                fee: 3000,
+                tickSpacing: 60,
+                hooks: Address::default(),
+            };
+
+            messager
+                .send(
+                    To::All,
+                    DeploymentRequest::Pool(PoolParams {
+                        key,
+                        sqrt_price_x96: U256::from_str("79228162514264337593543950336").unwrap(),
+                        hook_data: Bytes::default(),
+                    }),
+                )
+                .await?;
 
             use tokio::time::{sleep, Duration};
 
@@ -194,12 +218,15 @@ mod tests {
                 GeometricBrownianMotion::new(1.0, 0.0, 0.3, 1.0 / 252.0),
             ));
 
+        let arbitrageur = Agent::builder("arbitrageur").with_behavior(Arbitrageur::default());
+
         let mut world = World::new("id");
 
         world.add_agent(changer);
         world.add_agent(mock_deployer);
         world.add_agent(deployer);
         world.add_agent(token_deployer);
+        world.add_agent(arbitrageur);
 
         let _ = world.run().await;
     }
