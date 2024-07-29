@@ -1,4 +1,4 @@
-use std::{fmt::Debug, sync::Arc};
+use std::{fmt::Debug, sync::Arc, str::FromStr};
 
 use alloy::{
     primitives::{keccak256, Address, Bytes, Uint, B256, U256},
@@ -6,7 +6,6 @@ use alloy::{
     sol_types::SolCall,
 };
 use anyhow::Result;
-use bytes::BufMut;
 use futures::stream::StreamExt;
 use octane::{
     machine::{Behavior, ControlFlow, EventStream},
@@ -16,9 +15,10 @@ use octane::{
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    arbitrageur::Arbitrageur,
     bindings::{
         arenatoken::ArenaToken,
-        fetcher::Fetcher,
+        fetcher::{Fetcher, Fetcher::PoolKey as FetcherPoolKey},
         liquidexchange::LiquidExchange,
         poolmanager::{
             PoolManager,
@@ -39,22 +39,6 @@ pub mod liquidity_admin;
 pub mod pool_admin;
 pub mod price_changer;
 pub mod types;
-
-impl PoolKey {
-    fn encode(self) -> Vec<u8> {
-        let mut encoded = Vec::new();
-
-        &self.currency0.encode(&mut encoded);
-        &self.currency1.encode(&mut encoded);
-
-        &U256::from(self.fee).encode(&mut encoded);
-        &U256::from(self.tickSpacing as u32).encode(&mut encoded);
-
-        &self.hooks.encode(&mut encoded);
-
-        encoded
-    }
-}
 
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
 pub struct Base {
@@ -166,6 +150,22 @@ mod tests {
                 )
                 .await?;
 
+            let key = PoolKey {
+                currency0: self.tokens[0],
+                currency1: self.tokens[1],
+                fee: 10,
+                tickSpacing: 2,
+                hooks: Address::default(),
+            };
+
+            messager
+                .send(To::All, DeploymentRequest::Pool(PoolParams {
+                    key,
+                    sqrt_price_x96: U256::from_str("79228162514264337593543950336").unwrap(),
+                    hook_data: Bytes::default(),
+                }))
+                .await?;
+
             println!("Tokens: {:?}", self.tokens);
 
             use tokio::time::{sleep, Duration};
@@ -217,12 +217,15 @@ mod tests {
                 OrnsteinUhlenbeck::new(1.0, 0.15, 0.0, 0.3, 1.0 / 252.0),
             ));
 
+        let arbitrageur = Agent::builder("arbitrageur").with_behavior(Arbitrageur::default());
+
         let mut world = World::new("id");
 
         world.add_agent(changer);
         world.add_agent(mock_deployer);
         world.add_agent(deployer);
         world.add_agent(token_deployer);
+        world.add_agent(arbitrageur);
 
         let _ = world.run().await;
     }

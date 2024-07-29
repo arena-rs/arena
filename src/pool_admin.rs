@@ -14,8 +14,8 @@ pub struct PoolParams {
     #[serde(skip)]
     pub key: PoolKey,
 
-    sqrt_price_x96: U256,
-    hook_data: Bytes,
+    pub sqrt_price_x96: U256,
+    pub hook_data: Bytes,
 }
 
 #[async_trait::async_trait]

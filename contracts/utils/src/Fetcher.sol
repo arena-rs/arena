@@ -3,6 +3,7 @@ pragma solidity ^0.8.10;
 import {PoolId} from "v4-core/types/PoolId.sol";
 import {IPoolManager} from "v4-core/interfaces/IPoolManager.sol";
 import {Position} from "v4-core/libraries/Position.sol";
+import {PoolKey} from "v4-core/types/PoolKey.sol";
 
 // This contract is a compact version of StateLibrary, which can be found below.
 // https://github.com/Uniswap/v4-core/blob/799dd2cb980319a8d3b827b6a7aa59a606634553/src/libraries/StateLibrary.sol
@@ -11,6 +12,12 @@ contract Fetcher {
 
     function _getPoolStateSlot(PoolId poolId) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(PoolId.unwrap(poolId), POOLS_SLOT));
+    }
+
+    function toId(PoolKey memory poolKey) external pure returns (PoolId poolId) {
+        assembly ("memory-safe") {
+            poolId := keccak256(poolKey, mul(32, 5))
+        }
     }
 
     function getSlot0(IPoolManager manager, PoolId poolId)

@@ -1,7 +1,7 @@
 use super::*;
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
-struct Arbitrageur {
+#[derive(Debug, Default, Deserialize, Serialize, Clone)]
+pub struct Arbitrageur {
     pub base: Base,
     pub deployment: Option<Address>,
     pub pool: Option<PoolParams>,
@@ -49,14 +49,21 @@ impl Behavior<Message> for Arbitrageur {
         let manager = PoolManager::new(self.deployment.unwrap(), self.base.client.clone().unwrap());
         let fetcher = Fetcher::new(self.fetcher.unwrap(), self.base.client.clone().unwrap());
 
-        let id = keccak256(&self.pool.clone().unwrap().key.encode());
+        let fetcher_key = FetcherPoolKey {
+            currency0: self.pool.clone().unwrap().key.currency0,
+            currency1: self.pool.clone().unwrap().key.currency0,
+            fee: self.pool.clone().unwrap().key.fee,
+            tickSpacing: self.pool.clone().unwrap().key.tickSpacing,
+            hooks: self.pool.clone().unwrap().key.hooks,
+        };
+        let id = fetcher.toId(fetcher_key).call().await?.poolId;
 
-        let slot0 = fetcher
-            .getSlot0(*manager.address(), id)
-            .send()
-            .await?
-            .watch()
+        let get_slot0_return = fetcher
+            .getSlot0(manager.address().clone(), id)
+            .call()
             .await?;
+
+        println!("price: {:?}", get_slot0_return);
 
         return Ok(ControlFlow::Continue);
     }
