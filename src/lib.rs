@@ -1,9 +1,7 @@
 use std::{fmt::Debug, str::FromStr, sync::Arc};
 
 use alloy::{
-    primitives::{keccak256, Address, Bytes, Uint, B256, U256},
-    rlp::Encodable,
-    sol_types::SolCall,
+    primitives::{Address, Bytes, Uint, U256},
 };
 use anyhow::Result;
 use futures::stream::StreamExt;
@@ -28,7 +26,6 @@ use crate::{
     deployer::{DeploymentRequest, DeploymentResponse, PoolParams},
     price_changer::{PriceChanger, PriceUpdate, Signal},
     types::process::{OrnsteinUhlenbeck, StochasticProcess},
-    LiquidExchange::LiquidExchangeInstance,
 };
 
 pub mod arbitrageur;
@@ -179,10 +176,10 @@ mod tests {
                     }
                 };
 
-                if let DeploymentResponse::LiquidExchange(address) = query {
+                if let DeploymentResponse::LiquidExchange(_) = query {
                     sleep(Duration::from_millis(3000)).await;
-                    println!("here");
-                    for i in 0..100 {
+
+                    for _ in 0..100 {
                         messager.send(To::All, PriceUpdate).await?;
                     }
                 }

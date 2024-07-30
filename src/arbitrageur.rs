@@ -59,13 +59,14 @@ impl Behavior<Message> for Arbitrageur {
         let liquid_exchange =
             LiquidExchange::new(self.liquid_exchange.unwrap(), self.base.client.clone().unwrap());
 
+        let pool = self.pool.clone().unwrap();
 
         let fetcher_key = FetcherPoolKey {
-            currency0: self.pool.clone().unwrap().key.currency0,
-            currency1: self.pool.clone().unwrap().key.currency1,
-            fee: self.pool.clone().unwrap().key.fee,
-            tickSpacing: self.pool.clone().unwrap().key.tickSpacing,
-            hooks: self.pool.clone().unwrap().key.hooks,
+            currency0: pool.key.currency0,
+            currency1: pool.key.currency1,
+            fee: pool.key.fee,
+            tickSpacing: pool.key.tickSpacing,
+            hooks: pool.key.hooks,
         };
 
         let id = fetcher.toId(fetcher_key).call().await?.poolId;
@@ -75,10 +76,7 @@ impl Behavior<Message> for Arbitrageur {
             .call()
             .await?;
 
-        let sqrt_price_x96 = get_slot0_return.sqrtPriceX96;
-
-        let pricex192 = sqrt_price_x96.pow(U256::from(2));
-
+        let pricex192 = get_slot0_return.sqrtPriceX96.pow(U256::from(2));
         let two_pow_192 = U256::from(1u128) << 192;
         
         let scaled_price: U256 = (pricex192 * U256::from(10u128).pow(U256::from(18))) / two_pow_192;
@@ -91,6 +89,7 @@ impl Behavior<Message> for Arbitrageur {
         let diff = scaled_price.abs_diff(lex_price);
 
         println!("diff: {}", diff);        
+        println!("tick: {}", get_slot0_return.tick);   
 
         Ok(ControlFlow::Continue)
     }

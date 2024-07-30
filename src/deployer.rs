@@ -159,7 +159,6 @@ impl Behavior<Message> for Deployer {
 
                 Ok(ControlFlow::Continue)
             }
-            _ => Ok(ControlFlow::Continue),
         }
     }
 }
