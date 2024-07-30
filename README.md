@@ -1,5 +1,9 @@
 # arena 🏟️
 
+![visitors](https://visitor-badge.laobi.icu/badge?page_id=arena-rs.arena)
+[![Twitter Badge](https://badgen.net/badge/icon/twitter?icon=twitter&label)](https://twitter.com/anthiasxyz)
+![image](https://github.com/arena-rs/.github/blob/main/arena_banner.png)
+
 Arena is a powerful and extensible framework for holistic economic modelling and simulation of Uniswap v4 strategies, hooks and pools.
 
 Track how metrics evolve over time, and over various market conditions.
