@@ -14,7 +14,6 @@ pub struct PoolParams {
     pub hook_data: Bytes,
 }
 
-
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub enum DeploymentRequest {
     Token {

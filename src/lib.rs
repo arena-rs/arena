@@ -25,12 +25,11 @@ use crate::{
             PoolManager::{ModifyLiquidityParams, PoolKey},
         },
     },
-    deployer::{DeploymentRequest, DeploymentResponse},
-    price_changer::{PriceChanger, PriceUpdate},
+    deployer::{DeploymentRequest, DeploymentResponse, PoolParams},
+    price_changer::{PriceChanger, PriceUpdate, Signal},
     types::process::{OrnsteinUhlenbeck, StochasticProcess},
     LiquidExchange::LiquidExchangeInstance,
 };
-use crate::deployer::PoolParams;
 
 pub mod arbitrageur;
 pub mod bindings;
