@@ -1,8 +1,6 @@
 use std::{cmp::Ordering, fmt::Debug, sync::Arc};
 
-use alloy::{
-    primitives::{Address, Bytes, Uint, U256},
-};
+use alloy::primitives::{Address, Bytes, Uint, U256};
 use anyhow::Result;
 use futures::stream::StreamExt;
 use octane::{
@@ -23,8 +21,8 @@ use crate::{
         },
     },
     deployer::{DeploymentResponse, PoolParams},
-    price_changer::{Signal},
-    types::process::{StochasticProcess},
+    price_changer::Signal,
+    types::process::StochasticProcess,
 };
 
 pub mod arbitrageur;

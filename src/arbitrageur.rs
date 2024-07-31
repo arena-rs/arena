@@ -1,4 +1,3 @@
-
 use super::*;
 
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
@@ -149,10 +148,7 @@ impl Behavior<Message> for Arbitrageur {
 
         let id = fetcher.toId(fetcher_key).call().await?.poolId;
 
-        let get_slot0_return = fetcher
-            .getSlot0(*manager.address(), id)
-            .call()
-            .await?;
+        let get_slot0_return = fetcher.getSlot0(*manager.address(), id).call().await?;
 
         let pricex192 = get_slot0_return.sqrtPriceX96.pow(U256::from(2));
         let two_pow_192 = U256::from(1u128) << 192;
