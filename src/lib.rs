@@ -1,8 +1,7 @@
 use std::{fmt::Debug, str::FromStr, sync::Arc};
 
-use alloy::{
-    primitives::{Address, Bytes, Uint, U256},
-};
+use alloy::primitives::{Address, Bytes, Uint, U256};
+use alloy_sol_types::sol_data::FixedBytes;
 use anyhow::Result;
 use futures::stream::StreamExt;
 use octane::{

@@ -78,11 +78,11 @@ where
 
         tx.send().await?.watch().await?;
 
-        self.base.messager.clone().unwrap()
-            .send(
-                To::All,
-                Signal,
-            )
+        self.base
+            .messager
+            .clone()
+            .unwrap()
+            .send(To::All, Signal)
             .await?;
 
         Ok(ControlFlow::Continue)

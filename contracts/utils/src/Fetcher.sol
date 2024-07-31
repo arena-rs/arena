@@ -9,6 +9,7 @@ import {PoolKey} from "v4-core/types/PoolKey.sol";
 // https://github.com/Uniswap/v4-core/blob/799dd2cb980319a8d3b827b6a7aa59a606634553/src/libraries/StateLibrary.sol
 contract Fetcher {
     bytes32 public constant POOLS_SLOT = bytes32(uint256(6));
+    uint256 public constant TICKS_OFFSET = 4;
 
     function _getPoolStateSlot(PoolId poolId) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(PoolId.unwrap(poolId), POOLS_SLOT));
@@ -43,5 +44,30 @@ contract Fetcher {
             // last 24 bits of data
             lpFee := and(shr(208, data), 0xFFFFFF)
         }
+    }
+
+    function getTickLiquidity(IPoolManager manager, PoolId poolId, int24 tick)
+        external
+        view
+        returns (uint128 liquidityGross, int128 liquidityNet)
+    {
+        bytes32 slot = _getTickInfoSlot(poolId, tick);
+
+        bytes32 value = manager.extsload(slot);
+        assembly ("memory-safe") {
+            liquidityNet := sar(128, value)
+            liquidityGross := and(value, 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+        }
+    }
+
+    function _getTickInfoSlot(PoolId poolId, int24 tick) internal pure returns (bytes32) {
+        // slot key of Pool.State value: `pools[poolId]`
+        bytes32 stateSlot = _getPoolStateSlot(poolId);
+
+        // Pool.State: `mapping(int24 => TickInfo) ticks`
+        bytes32 ticksMappingSlot = bytes32(uint256(stateSlot) + TICKS_OFFSET);
+
+        // slot key of the tick key: `pools[poolId].ticks[tick]
+        return keccak256(abi.encodePacked(int256(tick), ticksMappingSlot));
     }
 }
