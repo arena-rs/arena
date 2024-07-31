@@ -10,10 +10,10 @@ pub struct LiquidityAdmin {
 #[derive(Deserialize, Serialize, Clone)]
 pub struct AllocationRequest {
     #[serde(skip)]
-    pool: PoolKey,
+    pub pool: PoolKey,
 
     #[serde(skip)]
-    modification: ModifyLiquidityParams,
+    pub modification: ModifyLiquidityParams,
 }
 
 #[async_trait::async_trait]

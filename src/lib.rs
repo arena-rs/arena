@@ -1,10 +1,8 @@
-use std::{cmp::Ordering, fmt::Debug, str::FromStr, sync::Arc};
+use std::{cmp::Ordering, fmt::Debug, sync::Arc};
 
 use alloy::{
     primitives::{Address, Bytes, Uint, U256},
-    providers::WalletProvider,
 };
-use alloy_sol_types::sol_data::FixedBytes;
 use anyhow::Result;
 use futures::stream::StreamExt;
 use octane::{
@@ -15,7 +13,6 @@ use octane::{
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    arbitrageur::Arbitrageur,
     bindings::{
         arenatoken::ArenaToken,
         fetcher::{Fetcher, Fetcher::PoolKey as FetcherPoolKey},
@@ -25,10 +22,9 @@ use crate::{
             PoolManager::{ModifyLiquidityParams, PoolKey},
         },
     },
-    deployer::{DeploymentRequest, DeploymentResponse, PoolParams},
-    liquidity_admin::{AllocationRequest, LiquidityAdmin},
-    price_changer::{PriceChanger, PriceUpdate, Signal},
-    types::process::{OrnsteinUhlenbeck, StochasticProcess},
+    deployer::{DeploymentResponse, PoolParams},
+    price_changer::{Signal},
+    types::process::{StochasticProcess},
 };
 
 pub mod arbitrageur;
@@ -81,7 +77,7 @@ mod tests {
                         symbol: String::from("TST0"),
                         decimals: 18,
                         initial_mint: 1000000,
-                        receiver: self.client.clone().unwrap().default_signer_address(),
+                        receiver: client.clone().default_signer_address(),
                     },
                 )
                 .await?;
@@ -94,7 +90,7 @@ mod tests {
                         symbol: String::from("TST1"),
                         decimals: 18,
                         initial_mint: 1000000,
-                        receiver: self.client.clone().unwrap().default_signer_address(),
+                        receiver: client.clone().default_signer_address(),
                     },
                 )
                 .await?;
@@ -165,10 +161,26 @@ mod tests {
                 .send(
                     To::All,
                     DeploymentRequest::Pool(PoolParams {
-                        key,
+                        key: key.clone(),
                         sqrt_price_x96: U256::from_str("79228162514264337593543950336").unwrap(),
                         hook_data: Bytes::default(),
                     }),
+                )
+                .await?;
+
+            messager
+                .send(
+                    To::All,
+                    AllocationRequest {
+                        pool: key.clone(),
+                        modification: ModifyLiquidityParams {
+                            tickLower: -10,
+                            tickUpper: 10,
+                            liquidityDelta: Signed::from_str("1000").unwrap(),
+                            salt: <FixedBytes<32> as SolType>::abi_decode(&[0u8; 32], true)
+                                .unwrap(),
+                        },
+                    },
                 )
                 .await?;
 
@@ -203,13 +215,14 @@ mod tests {
     async fn test_price_changer() {
         env_logger::init();
 
-        let token_deployer = Agent::builder("tdeployer").with_behavior(TokenDeployer {
-            messager: None,
-            client: None,
-        });
+        let token_deployer = Agent::builder("tdeployer")
+            .with_behavior(TokenDeployer {
+                messager: None,
+                client: None,
+            })
+            .with_behavior(LiquidityAdmin::default());
 
         let deployer = Agent::builder("deployer").with_behavior(Deployer::default());
-        let liquidity_admin = Agent::builder("liqadmin").with_behavior(LiquidityAdmin::default());
 
         let mock_deployer = Agent::builder("mock_deployer").with_behavior(MockOrchestrator {
             client: None,

@@ -1,4 +1,3 @@
-use std::f64::consts::LN_2;
 
 use super::*;
 
@@ -38,7 +37,7 @@ impl Arbitrageur {
 
             let (profit_mid, new_price_mid) =
                 Arbitrageur::profit(mid, p_ext, p_uni, fee, next_tick_liquidity);
-            let (profit_next, new_price_next) =
+            let (profit_next, _new_price_next) =
                 Arbitrageur::profit(mid + tol, p_ext, p_uni, fee, next_tick_liquidity);
 
             if profit_mid > profit_next {
@@ -56,7 +55,7 @@ impl Arbitrageur {
             }
         }
 
-        return (a + b) / 2.0;
+        (a + b) / 2.0
     }
 
     pub fn get_price_at_tick(tick: f64) -> f64 {
@@ -151,7 +150,7 @@ impl Behavior<Message> for Arbitrageur {
         let id = fetcher.toId(fetcher_key).call().await?.poolId;
 
         let get_slot0_return = fetcher
-            .getSlot0(manager.address().clone(), id)
+            .getSlot0(*manager.address(), id)
             .call()
             .await?;
 
@@ -162,7 +161,7 @@ impl Behavior<Message> for Arbitrageur {
 
         let lex_price = liquid_exchange.price().call().await?._0;
 
-        let diff = scaled_price.abs_diff(lex_price);
+        let _diff = scaled_price.abs_diff(lex_price);
 
         let p_uni = f64::from(scaled_price) / 10f64.powi(18);
         let p_ext = f64::from(lex_price) / 10f64.powi(18);

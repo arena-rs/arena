@@ -1,4 +1,6 @@
 #[allow(clippy::type_complexity)]
+#[allow(clippy::needless_lifetimes)]
+#[allow(clippy::useless_conversion)]
 
 /**
 
