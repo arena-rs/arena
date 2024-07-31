@@ -29,6 +29,7 @@ use crate::{
     price_changer::{PriceChanger, PriceUpdate},
     types::process::{OrnsteinUhlenbeck, GeometricBrownianMotion, StochasticProcess},
     LiquidExchange::LiquidExchangeInstance,
+    orchestrator::{Orchestrator, OrchestratorRequest, IterationType}
 };
 use crate::deployer::PoolParams;
 
@@ -38,6 +39,7 @@ pub mod deployer;
 pub mod liquidity_admin;
 pub mod price_changer;
 pub mod types;
+pub mod orchestrator;
 
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
 pub struct Base {
