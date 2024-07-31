@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Default, Serialize, Clone)]
 pub struct LiquidityAdmin {
     pub base: Base,
 

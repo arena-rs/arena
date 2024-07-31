@@ -167,7 +167,26 @@ impl Behavior<Message> for Arbitrageur {
         let p_uni = f64::from(scaled_price) / 10f64.powi(18);
         let p_ext = f64::from(lex_price) / 10f64.powi(18);
 
+        match p_uni.partial_cmp(&p_ext) {
+            Some(Ordering::Greater) => {
+                let swap_amount = self
+                    .optimal_swap(p_ext, p_uni, 0.003, get_slot0_return.tick as f64)
+                    .await;
+
+                println!("greater: Optimal swap amount: {}", swap_amount);
+            }
+            Some(Ordering::Less) => {
+                let swap_amount = self
+                    .optimal_swap(p_uni, p_ext, 0.003, get_slot0_return.tick as f64)
+                    .await;
+                println!("lesser: Optimal swap amount: {}", swap_amount);
+            }
+            Some(Ordering::Equal) => return Ok(ControlFlow::Continue),
+            None => panic!(),
+        }
+
         println!("tick: {}", get_slot0_return.tick);
+        println!("price: {}", p_ext);
 
         Ok(ControlFlow::Continue)
     }

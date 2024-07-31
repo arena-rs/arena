@@ -1,6 +1,9 @@
-use std::{fmt::Debug, str::FromStr, sync::Arc};
+use std::{cmp::Ordering, fmt::Debug, str::FromStr, sync::Arc};
 
-use alloy::primitives::{Address, Bytes, Uint, U256};
+use alloy::{
+    primitives::{Address, Bytes, Uint, U256},
+    providers::WalletProvider,
+};
 use alloy_sol_types::sol_data::FixedBytes;
 use anyhow::Result;
 use futures::stream::StreamExt;
@@ -23,6 +26,7 @@ use crate::{
         },
     },
     deployer::{DeploymentRequest, DeploymentResponse, PoolParams},
+    liquidity_admin::{AllocationRequest, LiquidityAdmin},
     price_changer::{PriceChanger, PriceUpdate, Signal},
     types::process::{OrnsteinUhlenbeck, StochasticProcess},
 };
@@ -76,6 +80,8 @@ mod tests {
                         name: String::from("TEST0"),
                         symbol: String::from("TST0"),
                         decimals: 18,
+                        initial_mint: 1000000,
+                        receiver: self.client.clone().unwrap().default_signer_address(),
                     },
                 )
                 .await?;
@@ -87,6 +93,8 @@ mod tests {
                         name: String::from("TEST1"),
                         symbol: String::from("TST1"),
                         decimals: 18,
+                        initial_mint: 1000000,
+                        receiver: self.client.clone().unwrap().default_signer_address(),
                     },
                 )
                 .await?;
@@ -201,6 +209,7 @@ mod tests {
         });
 
         let deployer = Agent::builder("deployer").with_behavior(Deployer::default());
+        let liquidity_admin = Agent::builder("liqadmin").with_behavior(LiquidityAdmin::default());
 
         let mock_deployer = Agent::builder("mock_deployer").with_behavior(MockOrchestrator {
             client: None,

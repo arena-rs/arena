@@ -20,6 +20,8 @@ pub enum DeploymentRequest {
         name: String,
         symbol: String,
         decimals: u8,
+        initial_mint: usize,
+        receiver: Address,
     },
 
     LiquidExchange {
@@ -93,13 +95,22 @@ impl Behavior<Message> for Deployer {
                 name,
                 symbol,
                 decimals,
+                initial_mint,
+                receiver,
             } => {
                 let token =
                     ArenaToken::deploy(self.base.client.clone().unwrap(), name, symbol, decimals)
                         .await
                         .unwrap();
 
-                println!("Token deployed at address: {:?}", token.address());
+                token
+                    .mint(receiver, Uint::from(initial_mint))
+                    .send()
+                    .await
+                    .unwrap()
+                    .watch()
+                    .await
+                    .unwrap();
 
                 self.base
                     .messager
