@@ -43,17 +43,17 @@ impl Behavior<Message> for Orchestrator {
         messenger: Messager
     ) -> Result<Option<EventStream<Message>>> {
         loop {
-            sleep(Duration::from_secs_f64(timesteps)).await;
-            if state {
-                match type_of_iteration { 
+            sleep(Duration::from_secs_f64(self.timesteps)).await;
+            if self.state {
+                match self.iteration_type { 
                     IterationType::Indefinite => {
                         messenger.send(To::All, PriceUpdate).await;
                     }, 
 
                     IterationType::Definite(iteration_reps) => {
-                        if self.iterations >= iteration_type {
+                        if iteration_reps >= self.iterations {
                             messenger.send(To::All, PriceUpdate).await;
-                            iteration_type += 1;
+                            self.iterations += 1;
                         }
                     },
                 }
@@ -79,7 +79,7 @@ impl Behavior<Message> for Orchestrator {
             }
 
             OrchestratorRequest::Restart => {
-                match type_of_iteration { 
+                match self.iteration_type { 
                     IterationType::Indefinite => {
                         self.state = true;
                     }, 
@@ -93,16 +93,20 @@ impl Behavior<Message> for Orchestrator {
             }
 
             OrchestratorRequest::ChangeTo(iteration_type) => {
-                let query: IterationType = match iteration_type {
-                    Ok(query) => {
+                match iteration_type {
+                    IterationType::Indefinite => {
                         self.iteration_type = iteration_type;
-                        query
+                    }, 
+
+                    IterationType::Definite(iteration_reps) => {
+                        self.iteration_type = iteration_type;
                     },
-                    Err(_) => {
+
+                    _ => {
                         println!("Attempted to use the wrong type of input");
                         return Ok(ControlFlow::Continue);
-                    },
-                };
+                    }
+                }
                 Ok(ControlFlow::Continue)
             }
 
