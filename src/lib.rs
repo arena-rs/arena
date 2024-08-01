@@ -22,7 +22,8 @@ use crate::{
     },
     deployer::{DeploymentResponse, PoolParams},
     price_changer::Signal,
-    types::process::StochasticProcess,
+    orchestrator::{Orchestrator, OrchestratorRequest, IterationType},
+    types::process::{OrnsteinUhlenbeck, GeometricBrownianMotion, StochasticProcess},
 };
 
 pub mod arbitrageur;
@@ -31,6 +32,7 @@ pub mod deployer;
 pub mod liquidity_admin;
 pub mod price_changer;
 pub mod types;
+pub mod orchestrator;
 
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
 pub struct Base {
@@ -229,8 +231,8 @@ mod tests {
         });
 
         let changer =
-            Agent::builder("pricechanger").with_behavior(PriceChanger::<OrnsteinUhlenbeck>::new(
-                OrnsteinUhlenbeck::new(1.0, 0.15, 0.0, 0.3, 1.0 / 252.0),
+            Agent::builder("pricechanger").with_behavior(PriceChanger::<GeometricBrownianMotion>::new(
+                GeometricBrownianMotion::new(1.0, 0.0, 0.3, 1.0 / 252.0),
             ));
 
         let arbitrageur = Agent::builder("arbitrageur").with_behavior(Arbitrageur::default());
