@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Default, Serialize, Clone)]
 pub struct LiquidityAdmin {
     pub base: Base,
 
@@ -10,10 +10,10 @@ pub struct LiquidityAdmin {
 #[derive(Deserialize, Serialize, Clone)]
 pub struct AllocationRequest {
     #[serde(skip)]
-    pool: PoolKey,
+    pub pool: PoolKey,
 
     #[serde(skip)]
-    modification: ModifyLiquidityParams,
+    pub modification: ModifyLiquidityParams,
 }
 
 #[async_trait::async_trait]

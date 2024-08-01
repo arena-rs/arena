@@ -6,7 +6,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-alloy = { version = "0.1.3", features = ["rlp", "node-bindings", "sol-types", "contract", "transports", "transport-http"] }
+alloy = { version = "0.1.3", features = ["rlp", "node-bindings", "sol-types", "contract", "transports", "transport-http", "rpc"] }
 tokio = { version = "1.36.0", features = ["full"] }
 revm = "10.0.0"
 octane = { git = "https://github.com/arena-rs/octane" }

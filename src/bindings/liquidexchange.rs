@@ -1,4 +1,6 @@
 #[allow(clippy::type_complexity)]
+#[allow(clippy::needless_lifetimes)]
+#[allow(clippy::useless_conversion)]
 
 /**
 
@@ -182,7 +184,6 @@ interface LiquidExchange {
 pub mod LiquidExchange {
     use alloy::sol_types as alloy_sol_types;
 
-    use super::*;
     /// The creation / init bytecode of the contract.
     ///
     /// ```text

@@ -7,6 +7,9 @@ use super::*;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PriceUpdate;
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Signal;
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct PriceChanger<T>
 where
@@ -58,7 +61,7 @@ where
     }
 
     async fn process(&mut self, event: Message) -> Result<ControlFlow> {
-        let query: PriceUpdate = match serde_json::from_str(&event.data) {
+        let _: PriceUpdate = match serde_json::from_str(&event.data) {
             Ok(query) => query,
             Err(_) => {
                 eprintln!("Failed to deserialize the event data into a PriceUpdate");
@@ -74,6 +77,13 @@ where
         )?);
 
         tx.send().await?.watch().await?;
+
+        self.base
+            .messager
+            .clone()
+            .unwrap()
+            .send(To::All, Signal)
+            .await?;
 
         Ok(ControlFlow::Continue)
     }
