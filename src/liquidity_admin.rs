@@ -3,17 +3,15 @@ use super::*;
 #[derive(Debug, Deserialize, Default, Serialize, Clone)]
 pub struct LiquidityAdmin {
     pub base: Base,
-
     pub deployment: Option<Address>,
+    pub lp: Option<Address>,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct AllocationRequest {
-    #[serde(skip)]
     pub pool: PoolKey,
-
-    #[serde(skip)]
     pub modification: ModifyLiquidityParams,
+    pub hook_data: Bytes,
 }
 
 #[async_trait::async_trait]
@@ -29,13 +27,15 @@ impl Behavior<Message> for LiquidityAdmin {
         let mut stream = messager.clone().stream().unwrap();
 
         while let Some(event) = stream.next().await {
-            let query: DeploymentResponse = match serde_json::from_str(&event.data) {
-                Ok(query) => query,
-                Err(_) => continue,
-            };
+            if let Ok(query) = serde_json::from_str::<DeploymentResponse>(&event.data) {
+                match query {
+                    DeploymentResponse::PoolManager(address) => self.deployment = Some(address),
+                    DeploymentResponse::LiquidityProvider(address) => self.lp = Some(address),
+                    _ => {}
+                }
+            }
 
-            if let DeploymentResponse::PoolManager(address) = query {
-                self.deployment = Some(address);
+            if self.lp.is_some() && self.deployment.is_some() {
                 break;
             }
         }
@@ -50,26 +50,47 @@ impl Behavior<Message> for LiquidityAdmin {
         };
 
         ArenaToken::new(query.pool.currency0, self.base.client.clone().unwrap())
-            .approve(self.deployment.unwrap(), Uint::MAX)
+            .approve(self.lp.unwrap(), Uint::from(100000))
             .send()
             .await?
             .watch()
             .await?;
 
         ArenaToken::new(query.pool.currency1, self.base.client.clone().unwrap())
-            .approve(self.deployment.unwrap(), Uint::MAX)
+            .approve(self.lp.unwrap(), Uint::from(100000))
             .send()
             .await?
             .watch()
             .await?;
 
-        PoolManager::new(self.deployment.unwrap(), self.base.client.clone().unwrap())
-            .modifyLiquidity(query.pool, query.modification, Bytes::default())
+        println!("deployment of manager: {:#?}", self.deployment.unwrap());
+
+        let liquidity_provider =
+            LiquidityProvider::new(self.lp.unwrap(), self.base.client.clone().unwrap());
+
+        let key = query.pool.clone();
+
+        let lp_key = LPoolKey {
+            currency0: key.currency0,
+            currency1: key.currency1,
+            fee: key.fee,
+            tickSpacing: key.tickSpacing,
+            hooks: key.hooks,
+        };
+
+        liquidity_provider
+            .createLiquidity(
+                lp_key,
+                query.modification.tickLower,
+                query.modification.tickUpper,
+                query.modification.liquidityDelta,
+                query.hook_data,
+            )
             .send()
             .await?
             .watch()
             .await?;
 
-        return Ok(ControlFlow::Continue);
+        Ok(ControlFlow::Continue)
     }
 }

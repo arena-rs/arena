@@ -1722,7 +1722,7 @@ pub mod PoolManager {
     struct ModifyLiquidityParams { int24 tickLower; int24 tickUpper; int256 liquidityDelta; bytes32 salt; }
     ```*/
     #[allow(non_camel_case_types, non_snake_case)]
-    #[derive(Clone, Default, Debug)]
+    #[derive(Clone, Default, Debug, serde::Serialize, serde::Deserialize)]
     pub struct ModifyLiquidityParams {
         pub tickLower: <alloy::sol_types::sol_data::Int<24> as alloy::sol_types::SolType>::RustType,
         pub tickUpper: <alloy::sol_types::sol_data::Int<24> as alloy::sol_types::SolType>::RustType,
@@ -6022,7 +6022,7 @@ pub mod PoolManager {
     }
     ///Container type for the return parameters of the [`modifyLiquidity((address,address,uint24,int24,address),(int24,int24,int256,bytes32),bytes)`](modifyLiquidityCall) function.
     #[allow(non_camel_case_types, non_snake_case)]
-    #[derive(Clone)]
+    #[derive(Clone, Debug)]
     pub struct modifyLiquidityReturn {
         pub callerDelta: <BalanceDelta as alloy::sol_types::SolType>::RustType,
         pub feesAccrued: <BalanceDelta as alloy::sol_types::SolType>::RustType,

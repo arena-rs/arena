@@ -180,7 +180,12 @@ impl Behavior<Message> for Arbitrageur {
             None => panic!(),
         }
 
-        println!("tick: {}", get_slot0_return.tick);
+        let liq = fetcher
+            .getTickLiquidity(*manager.address(), id, get_slot0_return.tick)
+            .call()
+            .await?;
+
+        println!("liq: {}", liq.liquidityGross);
         println!("price: {}", p_ext);
 
         Ok(ControlFlow::Continue)

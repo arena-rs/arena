@@ -7,6 +7,7 @@ pragma solidity ^0.8.17;
 // import "solmate/utils/FixedPointMathLib.sol"; // This import is correct given Arbiter's foundry.toml
 // import "solmate/utils/FixedPointMathLib.sol"; // This import goes directly to the contract
 // import "solmate/tokens/ERC20.sol";
+
 import "solmate/tokens/ERC20.sol";
 import "solmate/utils/FixedPointMathLib.sol";
 import "./ArenaToken.sol";
@@ -22,7 +23,7 @@ contract LiquidExchange {
     address public arbiterTokenX;
     address public arbiterTokenY;
     uint256 public price;
-    uint256 constant WAD = 10**18;
+    uint256 constant WAD = 10 ** 18;
 
     // Each LiquidExchange contract will be deployed with a pair of token addresses and an initial price
     constructor(address arbiterTokenX_, address arbiterTokenY_, uint256 price_) {
@@ -41,8 +42,7 @@ contract LiquidExchange {
         emit PriceChange(price);
     }
 
-    function swap(address tokenIn, uint256 amountIn) public{
-
+    function swap(address tokenIn, uint256 amountIn) public {
         uint256 amountOut;
         address tokenOut;
         if (tokenIn == arbiterTokenX) {
@@ -56,6 +56,6 @@ contract LiquidExchange {
         }
         require(ERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn), "Transfer failed");
         require(ERC20(tokenOut).transfer(msg.sender, amountOut), "Transfer failed");
-        emit Swap(tokenIn, tokenOut, amountIn, amountOut, msg.sender);    
+        emit Swap(tokenIn, tokenOut, amountIn, amountOut, msg.sender);
     }
 }

@@ -39,6 +39,7 @@ pub enum DeploymentResponse {
     LiquidExchange(Address),
     PoolManager(Address),
     Fetcher(Address),
+    LiquidityProvider(Address),
 
     // params pass through if deployment is successful
     Pool(PoolParams),
@@ -52,6 +53,10 @@ impl Behavior<Message> for Deployer {
         messager: Messager,
     ) -> Result<Option<EventStream<Message>>> {
         let pool_manager = PoolManager::deploy(client.clone(), Uint::from(5000))
+            .await
+            .unwrap();
+
+        let liquidity_provider = LiquidityProvider::deploy(client.clone(), *pool_manager.address())
             .await
             .unwrap();
 
@@ -70,6 +75,14 @@ impl Behavior<Message> for Deployer {
         messager
             .clone()
             .send(To::All, DeploymentResponse::Fetcher(*fetcher.address()))
+            .await?;
+
+        messager
+            .clone()
+            .send(
+                To::All,
+                DeploymentResponse::LiquidityProvider(*liquidity_provider.address()),
+            )
             .await?;
 
         self.base.client = Some(client.clone());
@@ -119,6 +132,8 @@ impl Behavior<Message> for Deployer {
                     .send(To::All, DeploymentResponse::Token(*token.address()))
                     .await?;
 
+                println!("got here 1");
+
                 Ok(ControlFlow::Continue)
             }
             DeploymentRequest::LiquidExchange {
@@ -141,7 +156,7 @@ impl Behavior<Message> for Deployer {
                     .unwrap()
                     .send(To::All, DeploymentResponse::LiquidExchange(*lex.address()))
                     .await?;
-
+                println!("got here 2");
                 Ok(ControlFlow::Continue)
             }
             DeploymentRequest::Pool(pool_creation) => {
@@ -167,6 +182,8 @@ impl Behavior<Message> for Deployer {
                     .unwrap()
                     .send(To::All, DeploymentResponse::Pool(key))
                     .await?;
+
+                println!("got here 3");
 
                 Ok(ControlFlow::Continue)
             }

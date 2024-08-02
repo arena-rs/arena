@@ -1,6 +1,10 @@
-use std::{cmp::Ordering, fmt::Debug, sync::Arc};
+use std::{cmp::Ordering, fmt::Debug, str::FromStr, sync::Arc};
 
-use alloy::primitives::{Address, Bytes, Uint, U256};
+use alloy::{
+    primitives::{Address, Bytes, Signed, Uint, U256},
+    providers::WalletProvider,
+};
+use alloy_sol_types::{sol_data::FixedBytes, SolType};
 use anyhow::Result;
 use futures::stream::StreamExt;
 use octane::{
@@ -11,18 +15,21 @@ use octane::{
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    arbitrageur::Arbitrageur,
     bindings::{
         arenatoken::ArenaToken,
         fetcher::{Fetcher, Fetcher::PoolKey as FetcherPoolKey},
         liquidexchange::LiquidExchange,
+        liquidityprovider::{LiquidityProvider, LiquidityProvider::PoolKey as LPoolKey},
         poolmanager::{
             PoolManager,
             PoolManager::{ModifyLiquidityParams, PoolKey},
         },
     },
-    deployer::{DeploymentResponse, PoolParams},
-    price_changer::Signal,
-    types::process::StochasticProcess,
+    deployer::{DeploymentRequest, DeploymentResponse, PoolParams},
+    liquidity_admin::{AllocationRequest, LiquidityAdmin},
+    price_changer::{PriceChanger, PriceUpdate, Signal},
+    types::process::{OrnsteinUhlenbeck, StochasticProcess},
 };
 
 pub mod arbitrageur;
@@ -150,7 +157,7 @@ mod tests {
             let key = PoolKey {
                 currency0: self.tokens[0],
                 currency1: self.tokens[1],
-                fee: 3000,
+                fee: 0,
                 tickSpacing: 60,
                 hooks: Address::default(),
             };
@@ -166,18 +173,24 @@ mod tests {
                 )
                 .await?;
 
+            println!(
+                "salt: {}",
+                <FixedBytes<32> as SolType>::abi_decode(&[0u8; 32], true).unwrap()
+            );
+
             messager
                 .send(
                     To::All,
                     AllocationRequest {
                         pool: key.clone(),
                         modification: ModifyLiquidityParams {
-                            tickLower: -10,
-                            tickUpper: 10,
-                            liquidityDelta: Signed::from_str("1000").unwrap(),
+                            tickLower: -120,
+                            tickUpper: 120,
+                            liquidityDelta: Signed::from_str("100000").unwrap(),
                             salt: <FixedBytes<32> as SolType>::abi_decode(&[0u8; 32], true)
                                 .unwrap(),
                         },
+                        hook_data: Bytes::default(),
                     },
                 )
                 .await?;
