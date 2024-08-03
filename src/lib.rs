@@ -26,7 +26,6 @@ use crate::{
             PoolManager::{ModifyLiquidityParams, PoolKey},
         },
     },
-    pool_admin::PoolAdmin,
     deployer::{DeploymentRequest, DeploymentResponse, PoolParams},
     liquidity_admin::{AllocationRequest, LiquidityAdmin},
     price_changer::{PriceChanger, PriceUpdate, Signal},
@@ -39,7 +38,6 @@ pub mod deployer;
 pub mod liquidity_admin;
 pub mod price_changer;
 pub mod types;
-pub mod pool_admin;
 
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
 pub struct Base {
