@@ -20,8 +20,6 @@ pub enum DeploymentRequest {
         name: String,
         symbol: String,
         decimals: u8,
-        initial_mint: usize,
-        receiver: Address,
     },
 
     LiquidExchange {
@@ -52,13 +50,10 @@ impl Behavior<Message> for Deployer {
         client: Arc<AnvilProvider>,
         messager: Messager,
     ) -> Result<Option<EventStream<Message>>> {
-        let pool_manager = PoolManager::deploy(client.clone(), Uint::from(5000))
+        let pool_manager = PoolManager::deploy(client.clone(), Uint::from(500000))
             .await
             .unwrap();
 
-        let liquidity_provider = LiquidityProvider::deploy(client.clone(), *pool_manager.address())
-            .await
-            .unwrap();
 
         let fetcher = Fetcher::deploy(client.clone()).await.unwrap();
 
@@ -75,14 +70,6 @@ impl Behavior<Message> for Deployer {
         messager
             .clone()
             .send(To::All, DeploymentResponse::Fetcher(*fetcher.address()))
-            .await?;
-
-        messager
-            .clone()
-            .send(
-                To::All,
-                DeploymentResponse::LiquidityProvider(*liquidity_provider.address()),
-            )
             .await?;
 
         self.base.client = Some(client.clone());
@@ -108,22 +95,11 @@ impl Behavior<Message> for Deployer {
                 name,
                 symbol,
                 decimals,
-                initial_mint,
-                receiver,
             } => {
                 let token =
                     ArenaToken::deploy(self.base.client.clone().unwrap(), name, symbol, decimals)
                         .await
                         .unwrap();
-
-                token
-                    .mint(receiver, Uint::from(initial_mint))
-                    .send()
-                    .await
-                    .unwrap()
-                    .watch()
-                    .await
-                    .unwrap();
 
                 self.base
                     .messager
@@ -131,8 +107,6 @@ impl Behavior<Message> for Deployer {
                     .unwrap()
                     .send(To::All, DeploymentResponse::Token(*token.address()))
                     .await?;
-
-                println!("got here 1");
 
                 Ok(ControlFlow::Continue)
             }
@@ -156,7 +130,7 @@ impl Behavior<Message> for Deployer {
                     .unwrap()
                     .send(To::All, DeploymentResponse::LiquidExchange(*lex.address()))
                     .await?;
-                println!("got here 2");
+
                 Ok(ControlFlow::Continue)
             }
             DeploymentRequest::Pool(pool_creation) => {
@@ -167,12 +141,10 @@ impl Behavior<Message> for Deployer {
                     PoolManager::new(self.manager.unwrap(), self.base.client.clone().unwrap());
 
                 let tx = pool_manager.initialize(
-                    key.clone().key,
-                    key.clone().sqrt_price_x96,
-                    key.clone().hook_data,
+                    pool_creation.key,
+                    pool_creation.sqrt_price_x96,
+                    pool_creation.hook_data,
                 );
-
-                println!("tx: {:#?}", tx);
 
                 tx.send().await?.watch().await?;
 
@@ -182,8 +154,6 @@ impl Behavior<Message> for Deployer {
                     .unwrap()
                     .send(To::All, DeploymentResponse::Pool(key))
                     .await?;
-
-                println!("got here 3");
 
                 Ok(ControlFlow::Continue)
             }

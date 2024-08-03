@@ -15,8 +15,8 @@ contract ArenaToken is ERC20 {
         _;
     }
 
-    function mint(address receiver, uint256 amount) public onlyAdmin returns (bool) {
-        _mint(receiver, amount);
+    function mint(uint256 amount) public returns (bool) {
+        _mint(msg.sender, amount);
         return true;
     }
 }
