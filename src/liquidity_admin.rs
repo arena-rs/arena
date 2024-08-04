@@ -50,9 +50,6 @@ impl Behavior<Message> for LiquidityAdmin {
             Err(_) => return Ok(ControlFlow::Continue),
         };
 
-        println!("duck");
-
-
         let liquidity_provider = LiquidityProvider::deploy(self.base.client.clone().unwrap(), self.deployment.unwrap())
             .await
             .unwrap();  
@@ -60,8 +57,8 @@ impl Behavior<Message> for LiquidityAdmin {
         let currency0 = ArenaToken::new(query.pool.currency0, self.base.client.clone().unwrap());
         let currency1 = ArenaToken::new(query.pool.currency1, self.base.client.clone().unwrap());
 
-        currency0.mint(Uint::MAX).send().await?.watch().await?;
-        currency1.mint(Uint::MAX).send().await?.watch().await?;
+        currency0.mint(Uint::from(2).pow(Uint::from(255))).send().await?.watch().await?;
+        currency1.mint(Uint::from(2).pow(Uint::from(255))).send().await?.watch().await?;
 
         currency0
             .approve(*liquidity_provider.address(), Uint::MAX)
@@ -87,20 +84,16 @@ impl Behavior<Message> for LiquidityAdmin {
             hooks: key.hooks,
         };
 
-        println!("do we get here");
-
         println!("lp_key: {:#?}", lp_key);
         println!("query.modification.tickLower: {:#?}", query.modification.tickLower);
 
-        let tx = liquidity_provider.createLiquidity(
+        let tx = liquidity_provider.modifyLiquidity_1(
             lp_key,
-            query.modification.tickLower,
-            query.modification.tickUpper,
-            query.modification.liquidityDelta,
+            query.modification,
             query.hook_data,
         );
 
-        let send_result = tx.call().await;
+        let send_result = tx.send().await;
 
         println!("send result: {:#?}", send_result);
         

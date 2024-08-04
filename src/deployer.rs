@@ -50,7 +50,7 @@ impl Behavior<Message> for Deployer {
         client: Arc<AnvilProvider>,
         messager: Messager,
     ) -> Result<Option<EventStream<Message>>> {
-        let pool_manager = PoolManager::deploy(client.clone(), Uint::from(500000))
+        let pool_manager = PoolManager::deploy(client.clone(), Uint::from(5000))
             .await
             .unwrap();
 

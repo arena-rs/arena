@@ -1,7 +1,7 @@
 use std::{cmp::Ordering, fmt::Debug, str::FromStr, sync::Arc};
 
 use alloy::{
-    primitives::{Address, Bytes, Signed, Uint, U256},
+    primitives::{Address, Bytes, I256, Uint, U256},
     providers::WalletProvider,
 };
 use alloy_sol_types::{sol_data::FixedBytes, SolType};
@@ -20,10 +20,10 @@ use crate::{
         arenatoken::ArenaToken,
         fetcher::{Fetcher, Fetcher::PoolKey as FetcherPoolKey},
         liquidexchange::LiquidExchange,
-        liquidityprovider::{LiquidityProvider, LiquidityProvider::PoolKey as LPoolKey},
+        liquidityprovider::{LiquidityProvider, LiquidityProvider::PoolKey as LPoolKey, LiquidityProvider::ModifyLiquidityParams, LiquidityProvider::Currency},
         poolmanager::{
             PoolManager,
-            PoolManager::{ModifyLiquidityParams, PoolKey},
+            PoolManager::{ModifyLiquidityParams as X, PoolKey},
         },
     },
     deployer::{DeploymentRequest, DeploymentResponse, PoolParams},
@@ -102,7 +102,7 @@ mod tests {
             let key = PoolKey {
                 currency0: tokens[0],
                 currency1: tokens[1],
-                fee: 1000,
+                fee: 3000,
                 tickSpacing: 60,
                 hooks: Address::default()
             };
@@ -113,15 +113,19 @@ mod tests {
                 hook_data: Bytes::default(),
             })).await?;
 
+            let modification = ModifyLiquidityParams {
+                tickLower: -120,
+                tickUpper: 120,
+                liquidityDelta: I256::from_str("1000000000000000000").unwrap(),
+                salt: <FixedBytes<32> as SolType>::abi_decode(&[0u8; 32], true)
+                    .unwrap(),
+            };
+
+            println!("{:#?}", modification);
+
             messager.send(To::All, AllocationRequest {
                 pool: key,
-                modification: ModifyLiquidityParams {
-                    tickLower: -600,
-                    tickUpper: 600,
-                    liquidityDelta: Signed::from_str("1000").unwrap(),
-                    salt: <FixedBytes<32> as SolType>::abi_decode(&[0u8; 32], true)
-                        .unwrap(),
-                },
+                modification,
                 hook_data: Bytes::default(),
             }).await?;
 
