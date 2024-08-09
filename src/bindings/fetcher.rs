@@ -253,6 +253,7 @@ pub mod Fetcher {
         }
         #[automatically_derived]
         impl alloy_sol_types::SolType for Currency {
+            const PACKED_ENCODED_SIZE: std::option::Option<usize> = None;
             type RustType = alloy::sol_types::private::Address;
             type Token<'a> =
                 <alloy::sol_types::sol_data::Address as alloy_sol_types::SolType>::Token<'a>;
@@ -357,6 +358,7 @@ pub mod Fetcher {
         }
         #[automatically_derived]
         impl alloy_sol_types::SolType for PoolId {
+            const PACKED_ENCODED_SIZE: std::option::Option<usize> = None;
             type RustType = alloy::sol_types::private::FixedBytes<32>;
             type Token<'a> =
                 <alloy::sol_types::sol_data::FixedBytes<32> as alloy_sol_types::SolType>::Token<'a>;
@@ -516,6 +518,7 @@ pub mod Fetcher {
         }
         #[automatically_derived]
         impl alloy_sol_types::SolType for PoolKey {
+            const PACKED_ENCODED_SIZE: std::option::Option<usize> = None;
             type RustType = Self;
             type Token<'a> = <UnderlyingSolTuple<'a> as alloy_sol_types::SolType>::Token<'a>;
             const SOL_NAME: &'static str = <Self as alloy_sol_types::SolStruct>::NAME;

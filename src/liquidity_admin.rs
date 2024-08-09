@@ -45,10 +45,12 @@ impl Behavior<Message> for LiquidityAdmin {
     }
 
     async fn process(&mut self, event: Message) -> Result<ControlFlow> {
-        let query: AllocationRequest = match serde_json::from_str(&event.data) {
+        let mut query: AllocationRequest = match serde_json::from_str(&event.data) {
             Ok(query) => query,
             Err(_) => return Ok(ControlFlow::Continue),
         };
+
+        
 
         let liquidity_provider = LiquidityProvider::deploy(self.base.client.clone().unwrap(), self.deployment.unwrap())
             .await
@@ -79,13 +81,10 @@ impl Behavior<Message> for LiquidityAdmin {
         let lp_key = LPoolKey {
             currency0: key.currency0,
             currency1: key.currency1,
-            fee: key.fee,
+            fee: key.fee + 1,
             tickSpacing: key.tickSpacing,
             hooks: key.hooks,
         };
-
-        println!("lp_key: {:#?}", lp_key);
-        println!("query.modification.tickLower: {:#?}", query.modification.tickLower);
 
         let tx = liquidity_provider.modifyLiquidity_1(
             lp_key,
@@ -100,6 +99,7 @@ impl Behavior<Message> for LiquidityAdmin {
         // let watch_result = send_result?.watch().await;
 
         // println!("watch result: {:#?}", watch_result);
+
 
         Ok(ControlFlow::Continue)
     }

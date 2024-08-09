@@ -13,7 +13,7 @@ use octane::{
     AnvilProvider,
 };
 use serde::{Deserialize, Serialize};
-
+use alloy::providers::Provider;
 use crate::{
     arbitrageur::Arbitrageur,
     bindings::{
@@ -65,89 +65,73 @@ mod tests {
             client: Arc<AnvilProvider>,
             messager: Messager,
         ) -> Result<Option<EventStream<Message>>> {
-            let mut tokens = Vec::new();
-            let mut stream = messager.clone().stream().unwrap();
+            let pool_manager = PoolManager::deploy(client.clone(), Uint::from(5000)).await.unwrap();
 
-            messager.send(To::All, DeploymentRequest::Token {
-                name: "Arena Token 0".to_string(),
-                symbol: "ARENA0".to_string(),
-                decimals: 18,
-            }).await?;
-
-            messager.send(To::All, DeploymentRequest::Token {
-                name: "Arena Token 1".to_string(),
-                symbol: "ARENA1".to_string(),
-                decimals: 18,
-            }).await?;
-
-            while let Some(event) = stream.next().await {
-                let query: DeploymentResponse = match serde_json::from_str(&event.data) {
-                    Ok(query) => query,
-                    Err(_) => continue,
-                };
-
-                if let DeploymentResponse::Token(address) = query {
-                    tokens.push(address);
-                }
-
-                if tokens.len() == 2 {
-                    break;
-                }
-            }
-
-            if tokens[0] > tokens[1] {
-                tokens.swap(0, 1);
-            }
-
+            // Deploy tokens
+            let currency0 = ArenaToken::deploy(client.clone(), "ARENA0".to_string(), "ARENA0".to_string(), 18).await?;
+            let currency1 = ArenaToken::deploy(client.clone(), "ARENA1".to_string(), "ARENA1".to_string(), 18).await?;
+        
+            // Mint tokens
+            currency0.mint(Uint::from(2).pow(Uint::from(255))).send().await?.watch().await?;
+            currency1.mint(Uint::from(2).pow(Uint::from(255))).send().await?.watch().await?;
+        
+            // Ensure the token addresses are ordered
+            let (currency0, currency1) = if currency0.address() > currency1.address() {
+                (currency1, currency0)
+            } else {
+                (currency0, currency1)
+            };
+        
+            // Create PoolKey
             let key = PoolKey {
-                currency0: tokens[0],
-                currency1: tokens[1],
-                fee: 3000,
+                currency0: *currency0.address(),
+                currency1: *currency1.address(),
+                fee: 2000,
                 tickSpacing: 60,
-                hooks: Address::default()
+                hooks: Address::default(),
             };
 
-            messager.send(To::All, DeploymentRequest::Pool(PoolParams {
-                key: key.clone(),
-                sqrt_price_x96: U256::from(79228162514264337593543950336_u128),
-                hook_data: Bytes::default(),
-            })).await?;
-
+            let lp_key = LPoolKey {
+                currency0: key.currency0,
+                currency1: key.currency1,
+                fee: key.fee,
+                tickSpacing: key.tickSpacing,
+                hooks: key.hooks,
+            };
+        
+            // Initialize pool
+            pool_manager.initialize(key.clone(), U256::from(79228162514264337593543950336_u128), Bytes::default()).send().await?.watch().await?;
+        
+            // Deploy LiquidityProvider
+            let liquidity_provider = LiquidityProvider::deploy(client.clone(), *pool_manager.address()).await.unwrap();
+        
+            // Approve tokens for LiquidityProvider
+            currency0.approve(*liquidity_provider.address(), Uint::MAX).send().await?.watch().await?;
+            currency1.approve(*liquidity_provider.address(), Uint::MAX).send().await?.watch().await?;
+        
+            // Create ModifyLiquidityParams
             let modification = ModifyLiquidityParams {
                 tickLower: -120,
                 tickUpper: 120,
-                liquidityDelta: I256::from_str("1000000000000000000").unwrap(),
-                salt: <FixedBytes<32> as SolType>::abi_decode(&[0u8; 32], true)
-                    .unwrap(),
+                liquidityDelta: I256::from_str("100000000000000000").unwrap(),
+                salt: <FixedBytes<32> as SolType>::abi_decode(&[0u8; 32], true).unwrap(),
             };
-
-            println!("{:#?}", modification);
-
-            messager.send(To::All, AllocationRequest {
-                pool: key,
-                modification,
-                hook_data: Bytes::default(),
-            }).await?;
-
-            Ok(Some(stream))
+        
+            // Modify liquidity
+            let tx = liquidity_provider.modifyLiquidity_1(lp_key, modification, Bytes::default());
+            let send_result = tx.send().await;
+        
+            println!("send result: {:#?}", send_result);
+            Ok(Some(messager.stream().unwrap()))
         }
     }
 
     #[tokio::test]
     async fn test_lp() {
-        env_logger::init();
-
         let harness = Agent::builder("harness").with_behavior(Harness::default());
-        let deployer = Agent::builder("deployer")
-            .with_behavior(Deployer::default());
-
-        let liq_admin = Agent::builder("admin")
-            .with_behavior(LiquidityAdmin::default());
 
         let mut world = World::new("id");
 
-        world.add_agent(deployer);
-        world.add_agent(liq_admin);
         world.add_agent(harness);
 
         let _ = world.run().await;

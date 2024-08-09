@@ -59,7 +59,7 @@ contract LiquidityProvider is PoolTestBase {
     }
 
     function unlockCallback(bytes calldata rawData) external returns (bytes memory) {
-        require(msg.sender == address(manager));
+        require(msg.sender == address(manager), "error 0");
 
         CallbackData memory data = abi.decode(rawData, (CallbackData));
 
@@ -81,11 +81,11 @@ contract LiquidityProvider is PoolTestBase {
         );
 
         if (data.params.liquidityDelta < 0) {
-            assert(delta0 > 0 || delta1 > 0);
-            assert(!(delta0 < 0 || delta1 < 0));
+            require(delta0 > 0 || delta1 > 0, "error 1");
+            require(!(delta0 < 0 || delta1 < 0), "error 2");
         } else if (data.params.liquidityDelta > 0) {
-            assert(delta0 < 0 || delta1 < 0);
-            assert(!(delta0 > 0 || delta1 > 0));
+            require(delta0 < 0 || delta1 < 0, "error 3");
+            require(!(delta0 > 0 || delta1 > 0), "error 4");
         }
 
         if (delta0 < 0) data.key.currency0.settle(manager, data.sender, uint256(-delta0), data.settleUsingBurn);
