@@ -1,0 +1,3 @@
+[submodule "contracts/v4-core"]
+	path = contracts/v4-core
+	url = https://github.com/uniswap/v4-core

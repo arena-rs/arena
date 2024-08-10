@@ -614,6 +614,8 @@ name = "arena"
 version = "0.1.0"
 dependencies = [
  "alloy",
+ "alloy-sol-macro",
+ "alloy-sol-types",
  "rand",
  "rand_distr",
  "tokio",

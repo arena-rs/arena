@@ -2,6 +2,7 @@ pub mod arena;
 pub mod config;
 pub mod feed;
 pub mod strategy;
+pub mod types;
 
 use alloy::{
     network::{Ethereum, EthereumWallet},
