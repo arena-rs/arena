@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use alloy::{providers::ProviderBuilder, signers::local::PrivateKeySigner};
 
 use super::*;
-use crate::{config::Config, feed::Feed, strategy::Strategy, types::PoolKey};
+use crate::{config::Config, feed::Feed, strategy::Strategy, types::PoolManager::PoolKey, types::PoolManager};
 
 pub struct Arena {
     pub env: AnvilInstance,
@@ -15,14 +15,16 @@ pub struct Arena {
 }
 
 impl Arena {
-    pub fn run(&mut self, config: Config) {
+    pub async fn run(&mut self, config: Config) {
+        let pool_manager = PoolManager::deploy(self.providers[&0].clone(), U256::from(0)).await;
+
         for (idx, strategy) in self.strategies.iter_mut().enumerate() {
-            strategy.init(self.providers[&idx].clone());
+            strategy.init(self.providers[&(idx + 1)].clone());
         }
 
         for step in 0..config.steps {
             for (idx, strategy) in self.strategies.iter_mut().enumerate() {
-                strategy.process(self.providers[&idx].clone());
+                strategy.process(self.providers[&(idx + 1)].clone());
             }
 
             self.feed.step();
@@ -68,7 +70,7 @@ impl ArenaBuilder {
     pub fn build(self) -> Arena {
         let mut providers = HashMap::new();
 
-        for i in 0..10 {
+        for i in 0..9 {
             let signer: PrivateKeySigner = self.env.keys()[i].clone().into();
             let wallet = EthereumWallet::from(signer);
 
@@ -79,7 +81,7 @@ impl ArenaBuilder {
                 .wallet(wallet)
                 .on_http(rpc_url);
 
-            providers.insert(i, provider).unwrap();
+            providers.insert(i, provider);
         }
 
         Arena {
