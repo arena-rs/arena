@@ -3,21 +3,20 @@ pub mod config;
 pub mod feed;
 pub mod strategy;
 pub mod types;
-use crate::arena::ArenaBuilder;
-use crate::strategy::Strategy;
-use crate::types::PoolManager::PoolKey;
-use crate::config::Config;
-use crate::feed::OrnsteinUhlenbeck;
-
 use alloy::{
     network::{Ethereum, EthereumWallet},
     node_bindings::{Anvil, AnvilInstance},
+    primitives::{Address, Bytes, U256},
     providers::{
         fillers::{ChainIdFiller, FillProvider, GasFiller, JoinFill, NonceFiller, WalletFiller},
         Identity, RootProvider,
     },
     transports::http::{Client, Http},
-    primitives::{U256, Address},
+};
+
+use crate::{
+    arena::ArenaBuilder, config::Config, feed::OrnsteinUhlenbeck, strategy::Strategy,
+    types::PoolManager::PoolKey,
 };
 
 pub type AnvilProvider = FillProvider<
@@ -49,7 +48,7 @@ mod tests {
             .with_strategy(Box::new(StrategyMock {}))
             .with_pool(PoolKey {
                 currency0: Address::default(),
-                currency1: Address::default(),
+                currency1: Address::repeat_byte(1),
                 fee: 4000,
                 tickSpacing: 2,
                 hooks: Address::default(),

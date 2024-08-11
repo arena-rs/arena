@@ -3,7 +3,12 @@ use std::collections::HashMap;
 use alloy::{providers::ProviderBuilder, signers::local::PrivateKeySigner};
 
 use super::*;
-use crate::{config::Config, feed::Feed, strategy::Strategy, types::PoolManager::PoolKey, types::PoolManager};
+use crate::{
+    config::Config,
+    feed::Feed,
+    strategy::Strategy,
+    types::{PoolManager, PoolManager::PoolKey},
+};
 
 pub struct Arena {
     pub env: AnvilInstance,
@@ -16,7 +21,21 @@ pub struct Arena {
 
 impl Arena {
     pub async fn run(&mut self, config: Config) {
-        let pool_manager = PoolManager::deploy(self.providers[&0].clone(), U256::from(0)).await;
+        let admin_provider = self.providers[&0].clone();
+
+        let pool_manager = PoolManager::deploy(admin_provider.clone(), U256::from(0))
+            .await
+            .unwrap();
+
+        pool_manager
+            .initialize(
+                self.pool.clone(),
+                U256::from(79228162514264337593543950336_u128),
+                Bytes::default(),
+            )
+            .call()
+            .await
+            .unwrap();
 
         for (idx, strategy) in self.strategies.iter_mut().enumerate() {
             strategy.init(self.providers[&(idx + 1)].clone());
