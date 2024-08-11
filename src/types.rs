@@ -12,3 +12,10 @@ sol! {
         address hooks;
     }
 }
+
+sol! {
+    #[sol(rpc)]
+    #[derive(Debug)]
+    PoolManager,
+    "contracts/v4-core/out/PoolManager.sol/PoolManager.json"
+}

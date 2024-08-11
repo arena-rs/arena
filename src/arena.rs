@@ -1,23 +1,28 @@
+use std::collections::HashMap;
+
+use alloy::{providers::ProviderBuilder, signers::local::PrivateKeySigner};
+
 use super::*;
-use crate::{config::Config, feed::Feed, strategy::Strategy};
-use crate::types::PoolKey;
+use crate::{config::Config, feed::Feed, strategy::Strategy, types::PoolKey};
 
 pub struct Arena {
     pub env: AnvilInstance,
     pub strategies: Vec<Box<dyn Strategy>>,
     pub pool: PoolKey,
     pub feed: Box<dyn Feed>,
+
+    providers: HashMap<usize, AnvilProvider>,
 }
 
 impl Arena {
     pub fn run(&mut self, config: Config) {
-        for i in self.strategies.iter_mut() {
-            // i.init();
+        for (idx, strategy) in self.strategies.iter_mut().enumerate() {
+            strategy.init(self.providers[&idx].clone());
         }
 
         for step in 0..config.steps {
-            for i in self.strategies.iter_mut() {
-                // i.process();
+            for (idx, strategy) in self.strategies.iter_mut().enumerate() {
+                strategy.process(self.providers[&idx].clone());
             }
 
             self.feed.step();
@@ -30,6 +35,8 @@ pub struct ArenaBuilder {
     pub strategies: Vec<Box<dyn Strategy>>,
     pub pool: Option<PoolKey>,
     pub feed: Option<Box<dyn Feed>>,
+
+    providers: Option<HashMap<usize, AnvilProvider>>,
 }
 
 impl ArenaBuilder {
@@ -39,6 +46,7 @@ impl ArenaBuilder {
             strategies: Vec::new(),
             pool: None,
             feed: None,
+            providers: None,
         }
     }
 
@@ -58,11 +66,28 @@ impl ArenaBuilder {
     }
 
     pub fn build(self) -> Arena {
+        let mut providers = HashMap::new();
+
+        for i in 0..10 {
+            let signer: PrivateKeySigner = self.env.keys()[i].clone().into();
+            let wallet = EthereumWallet::from(signer);
+
+            let rpc_url = self.env.endpoint().parse().unwrap();
+
+            let provider = ProviderBuilder::new()
+                .with_recommended_fillers()
+                .wallet(wallet)
+                .on_http(rpc_url);
+
+            providers.insert(i, provider).unwrap();
+        }
+
         Arena {
             env: self.env,
             strategies: self.strategies,
             pool: self.pool.unwrap(),
             feed: self.feed.unwrap(),
+            providers,
         }
     }
 }

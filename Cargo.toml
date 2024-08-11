@@ -4,7 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-alloy = { version = "0.2.1", features = ["full", "node-bindings"] }
+alloy = { version = "0.2.1", features = ["full", "node-bindings", "json"] }
+alloy-contract = "0.2.1"
 alloy-sol-macro = "0.7.7"
 alloy-sol-types = "0.7.7"
 rand = "0.8.5"

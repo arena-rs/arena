@@ -614,6 +614,7 @@ name = "arena"
 version = "0.1.0"
 dependencies = [
  "alloy",
+ "alloy-contract",
  "alloy-sol-macro",
  "alloy-sol-types",
  "rand",
