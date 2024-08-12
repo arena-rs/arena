@@ -11,23 +11,25 @@ pub trait Feed {
 }
 
 #[derive(Debug)]
+/// Implementation of an Ornstein-Uhlenbeck process using a Euler-Maruyama discretization scheme.
 pub struct OrnsteinUhlenbeck {
     current_value: f64,
 
-    /// Mean reversion rate
+    /// Mean reversion rate.
     theta: f64,
 
-    /// Long-term mean
+    /// Long-term mean.
     mu: f64,
 
-    // Volatility
+    /// Volatility.
     sigma: f64,
 
-    // Time step
+    /// Time step.
     dt: f64,
 }
 
 impl OrnsteinUhlenbeck {
+    /// Public constructor function for a new [`OrnsteinUhlenbeck`].
     pub fn new(initial_value: f64, theta: f64, mu: f64, sigma: f64, dt: f64) -> Self {
         OrnsteinUhlenbeck {
             current_value: initial_value,

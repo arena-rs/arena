@@ -10,16 +10,25 @@ use crate::{
     types::{PoolManager, PoolManager::PoolKey},
 };
 
+/// Represents an [`Arena`] that can be used to run a simulation and execute strategies.
 pub struct Arena {
+    /// The underlying Anvil execution environment.
     pub env: AnvilInstance,
+
+    /// The strategies that are to be run in the simulation.
     pub strategies: Vec<Box<dyn Strategy>>,
+
+    /// The pool that the strategies are to be run against, and the arbitrageur to peg.
     pub pool: PoolKey,
+
+    /// The feed that provides the current, theoretical value of the pool.
     pub feed: Box<dyn Feed>,
 
     providers: HashMap<usize, AnvilProvider>,
 }
 
 impl Arena {
+    /// Run all strategies in the simulation with a given configuration.
     pub async fn run(&mut self, config: Config) {
         let admin_provider = self.providers[&0].clone();
 
@@ -38,12 +47,28 @@ impl Arena {
             .unwrap();
 
         for (idx, strategy) in self.strategies.iter_mut().enumerate() {
-            strategy.init(self.providers[&(idx + 1)].clone());
+            strategy.init(
+                self.providers[&(idx + 1)].clone(),
+                Signal::new(
+                    *pool_manager.address(),
+                    self.pool.clone(),
+                    self.feed.current_value(),
+                    None,
+                ),
+            );
         }
 
         for step in 0..config.steps {
             for (idx, strategy) in self.strategies.iter_mut().enumerate() {
-                strategy.process(self.providers[&(idx + 1)].clone());
+                strategy.process(
+                    self.providers[&(idx + 1)].clone(),
+                    Signal::new(
+                        *pool_manager.address(),
+                        self.pool.clone(),
+                        self.feed.current_value(),
+                        Some(step),
+                    ),
+                );
             }
 
             self.feed.step();
@@ -51,16 +76,31 @@ impl Arena {
     }
 }
 
+/// A builder for an [`Arena`] that can be used to configure the simulation.
 pub struct ArenaBuilder {
+    /// [`Arena::env`]
     pub env: AnvilInstance,
+
+    /// [`Arena::strategies`]
     pub strategies: Vec<Box<dyn Strategy>>,
+
+    /// [`Arena::pool`]
     pub pool: Option<PoolKey>,
+
+    /// [`Arena::feed`]
     pub feed: Option<Box<dyn Feed>>,
 
     providers: Option<HashMap<usize, AnvilProvider>>,
 }
 
+impl Default for ArenaBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ArenaBuilder {
+    /// Public constructor function for a new [`ArenaBuilder`].
     pub fn new() -> Self {
         ArenaBuilder {
             env: Anvil::default().spawn(),
@@ -71,21 +111,25 @@ impl ArenaBuilder {
         }
     }
 
+    /// Add a strategy to the simulation.
     pub fn with_strategy(mut self, strategy: Box<dyn Strategy>) -> Self {
         self.strategies.push(strategy);
         self
     }
 
+    /// Set the pool that the strategies are to be run against.
     pub fn with_pool(mut self, pool: PoolKey) -> Self {
         self.pool = Some(pool);
         self
     }
 
+    /// Set the feed that provides the current, theoretical value of the pool.
     pub fn with_feed(mut self, feed: Box<dyn Feed>) -> Self {
         self.feed = Some(feed);
         self
     }
 
+    /// Build the [`Arena`] with the given configuration.
     pub fn build(self) -> Arena {
         let mut providers = HashMap::new();
 
