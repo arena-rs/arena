@@ -6,17 +6,18 @@ use super::*;
 use crate::{
     config::Config,
     feed::Feed,
+    inspector::Inspector,
     strategy::Strategy,
     types::{PoolManager, PoolManager::PoolKey},
 };
 
 /// Represents an [`Arena`] that can be used to run a simulation and execute strategies.
-pub struct Arena {
+pub struct Arena<V> {
     /// The underlying Anvil execution environment.
     pub env: AnvilInstance,
 
     /// The strategies that are to be run in the simulation.
-    pub strategies: Vec<Box<dyn Strategy>>,
+    pub strategies: Vec<Box<dyn Strategy<V>>>,
 
     /// The pool that the strategies are to be run against, and the arbitrageur to peg.
     pub pool: PoolKey,
@@ -24,10 +25,13 @@ pub struct Arena {
     /// The feed that provides the current, theoretical value of the pool.
     pub feed: Box<dyn Feed>,
 
+    /// The inspector that is used to evaluate the performance of the strategies.
+    pub inspector: Box<dyn Inspector<V>>,
+
     providers: HashMap<usize, AnvilProvider>,
 }
 
-impl Arena {
+impl<V> Arena<V> {
     /// Run all strategies in the simulation with a given configuration.
     pub async fn run(&mut self, config: Config) {
         let admin_provider = self.providers[&0].clone();
@@ -55,6 +59,7 @@ impl Arena {
                     self.feed.current_value(),
                     None,
                 ),
+                &mut self.inspector,
             );
         }
 
@@ -68,6 +73,7 @@ impl Arena {
                         self.feed.current_value(),
                         Some(step),
                     ),
+                    &mut self.inspector,
                 );
             }
 
@@ -77,12 +83,12 @@ impl Arena {
 }
 
 /// A builder for an [`Arena`] that can be used to configure the simulation.
-pub struct ArenaBuilder {
+pub struct ArenaBuilder<V> {
     /// [`Arena::env`]
     pub env: AnvilInstance,
 
     /// [`Arena::strategies`]
-    pub strategies: Vec<Box<dyn Strategy>>,
+    pub strategies: Vec<Box<dyn Strategy<V>>>,
 
     /// [`Arena::pool`]
     pub pool: Option<PoolKey>,
@@ -90,16 +96,19 @@ pub struct ArenaBuilder {
     /// [`Arena::feed`]
     pub feed: Option<Box<dyn Feed>>,
 
+    /// [`Arena::inspector`]
+    pub inspector: Option<Box<dyn Inspector<V>>>,
+
     providers: Option<HashMap<usize, AnvilProvider>>,
 }
 
-impl Default for ArenaBuilder {
+impl<V> Default for ArenaBuilder<V> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl ArenaBuilder {
+impl<V> ArenaBuilder<V> {
     /// Public constructor function for a new [`ArenaBuilder`].
     pub fn new() -> Self {
         ArenaBuilder {
@@ -108,11 +117,12 @@ impl ArenaBuilder {
             pool: None,
             feed: None,
             providers: None,
+            inspector: None,
         }
     }
 
     /// Add a strategy to the simulation.
-    pub fn with_strategy(mut self, strategy: Box<dyn Strategy>) -> Self {
+    pub fn with_strategy(mut self, strategy: Box<dyn Strategy<V>>) -> Self {
         self.strategies.push(strategy);
         self
     }
@@ -129,8 +139,14 @@ impl ArenaBuilder {
         self
     }
 
+    /// Set the inspector that is used to evaluate the performance of the strategies.
+    pub fn with_inspector(mut self, inspector: Box<dyn Inspector<V>>) -> Self {
+        self.inspector = Some(inspector);
+        self
+    }
+
     /// Build the [`Arena`] with the given configuration.
-    pub fn build(self) -> Arena {
+    pub fn build(self) -> Arena<V> {
         let mut providers = HashMap::new();
 
         for i in 0..9 {
@@ -152,6 +168,7 @@ impl ArenaBuilder {
             strategies: self.strategies,
             pool: self.pool.unwrap(),
             feed: self.feed.unwrap(),
+            inspector: self.inspector.unwrap(),
             providers,
         }
     }

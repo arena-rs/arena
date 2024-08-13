@@ -13,6 +13,9 @@ pub mod feed;
 /// Defines the base strategy trait.
 pub mod strategy;
 
+/// Defines the [`Inspector`] trait.
+pub mod inspector;
+
 use alloy::{
     network::{Ethereum, EthereumWallet},
     node_bindings::{Anvil, AnvilInstance},
@@ -24,7 +27,7 @@ use alloy::{
     transports::http::{Client, Http},
 };
 
-use crate::types::PoolManager::PoolKey;
+use crate::{inspector::Inspector, types::PoolManager::PoolKey};
 
 /// Provider type that includes all necessary fillers to execute transactions on an [`Anvil`] node.
 pub type AnvilProvider = FillProvider<
