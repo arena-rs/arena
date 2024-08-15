@@ -5,8 +5,8 @@ use alloy::{primitives::U256, providers::ProviderBuilder, signers::local::Privat
 use super::*;
 use crate::{
     config::Config,
+    engine::{arbitrageur::Arbitrageur, inspector::Inspector},
     feed::Feed,
-    inspector::Inspector,
     strategy::Strategy,
     types::{ArenaToken, LiquidExchange, PoolManager, PoolManager::PoolKey},
 };
@@ -27,6 +27,9 @@ pub struct Arena<V> {
 
     /// The inspector that is used to evaluate the performance of the strategies.
     pub inspector: Box<dyn Inspector<V>>,
+
+    /// The arbitrageur that is used to peg the pool.
+    pub arbitrageur: Box<dyn Arbitrageur>,
 
     providers: HashMap<usize, AnvilProvider>,
 }
@@ -96,10 +99,16 @@ impl<V> Arena<V> {
         }
 
         for step in 0..config.steps {
+            let signal = Signal::new(
+                *pool_manager.address(),
+                self.pool.clone(),
+                self.feed.current_value(),
+                Some(step),
+            );
+
             liquid_exchange
                 .setPrice(
-                    alloy::primitives::utils::parse_ether(&self.feed.step().to_string())
-                        .unwrap(),
+                    alloy::primitives::utils::parse_ether(&self.feed.step().to_string()).unwrap(),
                 )
                 .send()
                 .await
@@ -107,16 +116,13 @@ impl<V> Arena<V> {
                 .watch()
                 .await
                 .unwrap();
-                
+
+            self.arbitrageur.arbitrage(&signal, admin_provider.clone());
+
             for (idx, strategy) in self.strategies.iter_mut().enumerate() {
                 strategy.process(
                     self.providers[&(idx + 1)].clone(),
-                    Signal::new(
-                        *pool_manager.address(),
-                        self.pool.clone(),
-                        self.feed.current_value(),
-                        Some(step),
-                    ),
+                    signal.clone(),
                     &mut self.inspector,
                 );
             }
@@ -143,6 +149,9 @@ pub struct ArenaBuilder<V> {
     /// [`Arena::inspector`]
     pub inspector: Option<Box<dyn Inspector<V>>>,
 
+    /// [`Arena::arbitrageur`]
+    pub arbitrageur: Option<Box<dyn Arbitrageur>>,
+
     providers: Option<HashMap<usize, AnvilProvider>>,
 }
 
@@ -162,6 +171,7 @@ impl<V> ArenaBuilder<V> {
             feed: None,
             providers: None,
             inspector: None,
+            arbitrageur: None,
         }
     }
 
@@ -201,6 +211,12 @@ impl<V> ArenaBuilder<V> {
         self
     }
 
+    /// Set the inspector that is used to evaluate the performance of the strategies.
+    pub fn with_arbitrageur(mut self, arbitrageur: Box<dyn Arbitrageur>) -> Self {
+        self.arbitrageur = Some(arbitrageur);
+        self
+    }
+
     /// Build the [`Arena`] with the given configuration.
     pub fn build(self) -> Arena<V> {
         let mut providers = HashMap::new();
@@ -225,6 +241,7 @@ impl<V> ArenaBuilder<V> {
             pool: self.pool,
             feed: self.feed.unwrap(),
             inspector: self.inspector.unwrap(),
+            arbitrageur: self.arbitrageur.unwrap(),
             providers,
         }
     }

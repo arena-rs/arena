@@ -31,7 +31,7 @@ The price of the simulation's underlying pool is set via a price process that im
 To use Arena, the Rust programming language must be installed on your machine. This is commonly achieved using `rustup`.
 
 Arena can be added to your library or binary with 
-```rust
+```
 cargo add arena-core
 ```
 

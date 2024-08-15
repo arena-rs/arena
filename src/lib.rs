@@ -1,5 +1,4 @@
 #![warn(missing_docs)]
-#[doc = include_str!("../README.md")]
 
 /// Defines the main simulation runtime.
 pub mod arena;
@@ -13,8 +12,7 @@ pub mod feed;
 /// Defines the base strategy trait.
 pub mod strategy;
 
-/// Defines the [`Inspector`] trait.
-pub mod inspector;
+pub mod engine;
 
 use alloy::{
     network::{Ethereum, EthereumWallet},
@@ -27,7 +25,7 @@ use alloy::{
     transports::http::{Client, Http},
 };
 
-use crate::{inspector::Inspector, types::PoolManager::PoolKey};
+use crate::{engine::inspector::Inspector, types::PoolManager::PoolKey};
 
 /// Provider type that includes all necessary fillers to execute transactions on an [`Anvil`] node.
 pub type AnvilProvider = FillProvider<
@@ -105,8 +103,15 @@ mod tests {
         feed::OrnsteinUhlenbeck,
         strategy::Strategy,
     };
+    use crate::engine::arbitrageur::Arbitrageur;
+
     struct StrategyMock;
     struct InspectorMock;
+    struct ArbitrageurMock;
+
+    impl Arbitrageur for ArbitrageurMock {
+        fn arbitrage(&self, _signal: &Signal, _provider: AnvilProvider) {}
+    }
 
     impl Inspector<f64> for InspectorMock {
         fn inspect(&self, _step: usize) -> Option<f64> {
@@ -143,8 +148,9 @@ mod tests {
             .with_tick_spacing(2)
             .with_feed(Box::new(OrnsteinUhlenbeck::new(0.1, 0.1, 0.1, 0.1, 0.1)))
             .with_inspector(Box::new(InspectorMock {}))
+            .with_arbitrageur(Box::new(ArbitrageurMock {}))
             .build();
 
-        arena.run(Config::new(0)).await;
+        arena.run(Config::new(1)).await;
     }
 }
