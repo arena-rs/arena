@@ -46,9 +46,25 @@ mod types {
     #[allow(missing_docs)]
     sol! {
         #[sol(rpc)]
-        #[derive(Debug)]
+        #[derive(Debug, Default)]
         PoolManager,
         "contracts/v4-core/out/PoolManager.sol/PoolManager.json"
+    }
+
+    #[allow(missing_docs)]
+    sol! {
+        #[sol(rpc)]
+        #[derive(Debug)]
+        LiquidExchange,
+        "contracts/utils/out/LiquidExchange.sol/LiquidExchange.json"
+    }
+
+    #[allow(missing_docs)]
+    sol! {
+        #[sol(rpc)]
+        #[derive(Debug)]
+        ArenaToken,
+        "contracts/utils/out/ArenaToken.sol/ArenaToken.json"
     }
 }
 
@@ -83,29 +99,50 @@ impl Signal {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{arena::ArenaBuilder, config::Config, feed::OrnsteinUhlenbeck, strategy::Strategy};
-
+    use crate::{
+        arena::{Arena, ArenaBuilder},
+        config::Config,
+        feed::OrnsteinUhlenbeck,
+        strategy::Strategy,
+    };
     struct StrategyMock;
+    struct InspectorMock;
 
-    impl Strategy for StrategyMock {
-        fn init(&self, _provider: AnvilProvider, _signal: Signal) {}
-        fn process(&self, _provider: AnvilProvider, _signal: Signal) {}
+    impl Inspector<f64> for InspectorMock {
+        fn inspect(&self, _step: usize) -> Option<f64> {
+            None
+        }
+        fn log(&mut self, _value: f64) {}
+        fn save(&self) {}
+    }
+
+    impl<V> Strategy<V> for StrategyMock {
+        fn init(
+            &self,
+            _provider: AnvilProvider,
+            _signal: Signal,
+            _inspector: &mut Box<dyn Inspector<V>>,
+        ) {
+        }
+        fn process(
+            &self,
+            _provider: AnvilProvider,
+            _signal: Signal,
+            _inspector: &mut Box<dyn Inspector<V>>,
+        ) {
+        }
     }
 
     #[tokio::test]
     async fn test_arena() {
-        let builder = ArenaBuilder::new();
+        let builder: ArenaBuilder<_> = ArenaBuilder::new();
 
-        let mut arena = builder
+        let mut arena: Arena<f64> = builder
             .with_strategy(Box::new(StrategyMock {}))
-            .with_pool(PoolKey {
-                currency0: Address::default(),
-                currency1: Address::repeat_byte(1),
-                fee: 4000,
-                tickSpacing: 2,
-                hooks: Address::default(),
-            })
+            .with_fee(4000)
+            .with_tick_spacing(2)
             .with_feed(Box::new(OrnsteinUhlenbeck::new(0.1, 0.1, 0.1, 0.1, 0.1)))
+            .with_inspector(Box::new(InspectorMock {}))
             .build();
 
         arena.run(Config::new(0)).await;

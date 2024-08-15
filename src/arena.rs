@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use alloy::{providers::ProviderBuilder, signers::local::PrivateKeySigner};
+use alloy::{primitives::U256, providers::ProviderBuilder, signers::local::PrivateKeySigner};
 
 use super::*;
 use crate::{
@@ -8,7 +8,7 @@ use crate::{
     feed::Feed,
     inspector::Inspector,
     strategy::Strategy,
-    types::{PoolManager, PoolManager::PoolKey},
+    types::{ArenaToken, LiquidExchange, PoolManager, PoolManager::PoolKey},
 };
 
 /// Represents an [`Arena`] that can be used to run a simulation and execute strategies.
@@ -40,6 +40,38 @@ impl<V> Arena<V> {
             .await
             .unwrap();
 
+        let currency_0 = ArenaToken::deploy(
+            admin_provider.clone(),
+            String::from("Currency 0"),
+            String::from("C0"),
+            18,
+        )
+        .await
+        .unwrap();
+
+        let currency_1 = ArenaToken::deploy(
+            admin_provider.clone(),
+            String::from("Currency 1"),
+            String::from("C1"),
+            18,
+        )
+        .await
+        .unwrap();
+
+        let liquid_exchange = LiquidExchange::deploy(
+            admin_provider.clone(),
+            *currency_0.address(),
+            *currency_1.address(),
+            U256::from(1),
+        )
+        .await
+        .unwrap();
+
+        if *currency_1.address() < *currency_0.address() {
+            self.pool.currency0 = *currency_1.address();
+            self.pool.currency1 = *currency_0.address();
+        }
+
         pool_manager
             .initialize(
                 self.pool.clone(),
@@ -65,6 +97,18 @@ impl<V> Arena<V> {
 
         for step in 0..config.steps {
             for (idx, strategy) in self.strategies.iter_mut().enumerate() {
+                liquid_exchange
+                    .setPrice(
+                        alloy::primitives::utils::parse_ether(&self.feed.step().to_string())
+                            .unwrap(),
+                    )
+                    .send()
+                    .await
+                    .unwrap()
+                    .watch()
+                    .await
+                    .unwrap();
+
                 strategy.process(
                     self.providers[&(idx + 1)].clone(),
                     Signal::new(
@@ -91,7 +135,7 @@ pub struct ArenaBuilder<V> {
     pub strategies: Vec<Box<dyn Strategy<V>>>,
 
     /// [`Arena::pool`]
-    pub pool: Option<PoolKey>,
+    pub pool: PoolKey,
 
     /// [`Arena::feed`]
     pub feed: Option<Box<dyn Feed>>,
@@ -114,7 +158,7 @@ impl<V> ArenaBuilder<V> {
         ArenaBuilder {
             env: Anvil::default().spawn(),
             strategies: Vec::new(),
-            pool: None,
+            pool: PoolKey::default(),
             feed: None,
             providers: None,
             inspector: None,
@@ -127,9 +171,21 @@ impl<V> ArenaBuilder<V> {
         self
     }
 
-    /// Set the pool that the strategies are to be run against.
-    pub fn with_pool(mut self, pool: PoolKey) -> Self {
-        self.pool = Some(pool);
+    /// Set the pool fee.
+    pub fn with_fee(mut self, fee: u32) -> Self {
+        self.pool.fee = fee;
+        self
+    }
+
+    /// Set the pool tick spacing.
+    pub fn with_tick_spacing(mut self, tick_spacing: i32) -> Self {
+        self.pool.tickSpacing = tick_spacing;
+        self
+    }
+
+    /// Set the pool hooks.
+    pub fn with_hooks(mut self, hooks: Address) -> Self {
+        self.pool.hooks = hooks;
         self
     }
 
@@ -166,7 +222,7 @@ impl<V> ArenaBuilder<V> {
         Arena {
             env: self.env,
             strategies: self.strategies,
-            pool: self.pool.unwrap(),
+            pool: self.pool,
             feed: self.feed.unwrap(),
             inspector: self.inspector.unwrap(),
             providers,
