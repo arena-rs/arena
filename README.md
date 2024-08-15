@@ -4,20 +4,40 @@
 [![Twitter Badge](https://badgen.net/badge/icon/twitter?icon=twitter&label)](https://twitter.com/anthiasxyz)
 ![image](https://github.com/arena-rs/.github/blob/main/arena_banner.png)
 
-Arena is a powerful and extensible framework for holistic economic modelling and simulation of Uniswap v4 strategies, hooks and pools.
+> *Arena is a powerful and extensible framework for holistic economic modelling and simulation of Uniswap v4 strategies, hooks and pools.*
 
 Track how metrics evolve over time, and over various market conditions.
 
 ## Overview
 
-Arena uses a modified version of [Arbiter](https://github.com/primitivefinance/arbiter) engine called [octane](https://github.com/arena-rs/octane), which alloys the usage of [alloy](https://alloy.rs/) and anvil for simulation. An agent-oriented architecture is utilized.
+Arena introduces a novel approach to LP simululation through a highly-configurable event-driven runtime. Each event consists of integral market information for a strategy, from which the actor can derive insight from.
 
-- [x] Deployer agent.
-- [x] Pool admin agent.
-- [ ] Arbitrageur agent.  
+Arena is an [alloy](https://alloy.rs) native project, utilizing many crate-native features such as the `sol!` procedural macro, and the `Anvil` testnet node implementation.
 
-## Initial goals
-- Simulate fee accumulation for a stable pool across various market volatilities using an Ornstein-Uhlenbeck process and agentic modelling.
-- Geometric Brownian motion for a non-stable pool.
-- Provide a set of reusable, extensible and modular types that allow any liquidity provision strategy to be defined, and any market condition.
-- Command line interface for plug-and-play analytics and simulation.
+## Technical details
+
+Every LP strategy must implement the `Strategy` trait. This contains two key methods:
+- `init()` is called upon initialization of the Arena runtime.
+- `process()` is called each discrete timestep of the simulation.
+
+Additionally, each LP strategy accepts an `Inspector`. An `Inspector` allows custom behavior to be defined for performance analysis of strategy and continuous telemetry. Arena will provide default `Inspector` implementations for CSV output, graph plotting and JSON output. 
+
+The runtime can hold multiple strategies in paralell.
+
+The price of the simulation's underlying pool is set via a price process that implements the `Feed` trait. Currently, Arena implements an Ornstein-Uhlenbeck price process using a Euler-Maryama discretization scheme for stable pool simulation. The price is set on an infinitely liquid exchange (sometimes referred to as a "lex"), and tied to the v4 pool using an `Arbitrageur`.
+
+## Usage
+
+To use Arena, the Rust programming language must be installed on your machine. This is commonly achieved using `rustup`.
+
+Arena can be added to your library or binary with 
+```rust
+cargo add arena-core
+```
+
+If you wish to build from source, the project can be cloned with:
+```
+git clone https://github.com/arena-rs/arena.git
+cd arena
+git submodule update --init --recursive
+```

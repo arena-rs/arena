@@ -96,19 +96,19 @@ impl<V> Arena<V> {
         }
 
         for step in 0..config.steps {
+            liquid_exchange
+                .setPrice(
+                    alloy::primitives::utils::parse_ether(&self.feed.step().to_string())
+                        .unwrap(),
+                )
+                .send()
+                .await
+                .unwrap()
+                .watch()
+                .await
+                .unwrap();
+                
             for (idx, strategy) in self.strategies.iter_mut().enumerate() {
-                liquid_exchange
-                    .setPrice(
-                        alloy::primitives::utils::parse_ether(&self.feed.step().to_string())
-                            .unwrap(),
-                    )
-                    .send()
-                    .await
-                    .unwrap()
-                    .watch()
-                    .await
-                    .unwrap();
-
                 strategy.process(
                     self.providers[&(idx + 1)].clone(),
                     Signal::new(
