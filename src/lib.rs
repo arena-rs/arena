@@ -46,7 +46,7 @@ mod types {
         #[sol(rpc)]
         #[derive(Debug, Default)]
         PoolManager,
-        "contracts/v4-core/out/PoolManager.sol/PoolManager.json"
+        "src/artifacts/PoolManager.json"
     }
 
     #[allow(missing_docs)]
@@ -54,7 +54,7 @@ mod types {
         #[sol(rpc)]
         #[derive(Debug)]
         LiquidExchange,
-        "contracts/utils/out/LiquidExchange.sol/LiquidExchange.json"
+        "src/artifacts/LiquidExchange.json"
     }
 
     #[allow(missing_docs)]
@@ -62,7 +62,7 @@ mod types {
         #[sol(rpc)]
         #[derive(Debug)]
         ArenaToken,
-        "contracts/utils/out/ArenaToken.sol/ArenaToken.json"
+        "src/artifacts/ArenaToken.json"
     }
 }
 
