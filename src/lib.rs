@@ -26,6 +26,7 @@ use alloy::{
 };
 
 use crate::{engine::inspector::Inspector, types::PoolManager::PoolKey};
+use crate::engine::inspector::SaveData;
 
 /// Provider type that includes all necessary fillers to execute transactions on an [`Anvil`] node.
 pub type AnvilProvider = FillProvider<
@@ -118,7 +119,7 @@ mod tests {
             None
         }
         fn log(&mut self, _value: f64) {}
-        fn save(&self) {}
+        fn save(&self, save_type: Option<SaveData>) {}
     }
 
     impl<V> Strategy<V> for StrategyMock {
