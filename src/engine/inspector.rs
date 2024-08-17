@@ -13,7 +13,7 @@ pub trait Inspector<V> {
     /// Save the inspector state.
     fn save(&self);
 }
-
+ 
 // pub struct Plotter {
 //     values: Vecf64>,
 // }
