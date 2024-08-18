@@ -5,6 +5,8 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
 use std::fs::OpenOptions;
+use std::{error::Error, io, process};
+use serde::{Serialize, Deserialize};
 
 /// Trait allowing custom behavior to be defined for logging and inspecting values.
 pub trait Inspector<V> {
@@ -23,7 +25,7 @@ pub enum SaveData {
     ToNewFile(String),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct LogMessage {
     id: usize, // Id of the log
     name: String, // Name of the log
@@ -58,22 +60,56 @@ impl Logger {
         }
     }
 
-    pub fn append_to_csv(file_location: &String, contents: String) {
-        let path = Path::new(file_location); 
-        let mut file = OpenOptions::new()
-            .write(true)
+    fn append_to_csv(record: LogMessage, path: &Path) -> Result<(), csv::Error> {
+        let file = OpenOptions::new() 
             .append(true)
-            .open(path)
-            .unwrap();
+            .create(true)
+            .open(path)?;
     
-        if let Err(e) = writeln!(file, "{}", contents) {
-            eprintln!("Couldn't write to file: {}", e);
-        }
+        let mut writer = csv::Writer::from_writer(file);
+    
+        writer.serialize((
+            record.id, 
+            record.name, 
+            record.data
+        ))?;
+        writer.flush()?;
+    
+        Ok(())
     }
 
-    pub fn create_csv(file_location: &String) {
-        let mut file = File::create(file_location);
+    fn create_csv(file_location: &String) -> Result<(), csv::Error> {
+        let file = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(file_location)?;
+    
+        let mut writer = csv::Writer::from_writer(file);
+        writer.write_record(&["id", "name", "data"])?;
+        writer.flush()?;
+    
+        Ok(())
     }
+    /*
+    fn read_csv_file(file_location: &String) -> Result<Vec<LogMessage>, csv::Error> {
+        let mut records: Vec<LogMessage> = vec![];
+        let file = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(file_location)?;
+
+        let mut reader = csv::Reader::from_reader(file);
+    
+        for record in reader.deserialize() {
+            // println!("Line");
+            let record: Record = record?;
+            records.push(record);
+        }
+        Ok(records)
+    }
+    */
 }
 
 impl Inspector<LogMessage> for Logger {
@@ -97,16 +133,11 @@ impl Inspector<LogMessage> for Logger {
             SaveData::ToFile(file_location) => {
                 file_loc = file_location;
             },
-            _ => {
-                panic!("Failed to get save_type enum");
-            },
         }
 
-        let intial_data = String::from("id;name;data");
-        Logger::append_to_csv(&file_loc, intial_data);
         for log in self.values.clone() {
-            let data = format!("{};{};{}", log.id, log.name, log.data);
-            Logger::append_to_csv(&file_loc, data);
+            let file_path = Path::new(&file_loc);
+            Logger::append_to_csv(log, &file_path);
         }
     }
 }
