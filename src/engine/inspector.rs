@@ -7,6 +7,7 @@ use std::path::Path;
 use std::fs::OpenOptions;
 use std::{error::Error, io, process};
 use serde::{Serialize, Deserialize};
+use serde_json::{Value, json};
 
 /// Trait allowing custom behavior to be defined for logging and inspecting values.
 pub trait Inspector<V> {
@@ -21,8 +22,10 @@ pub trait Inspector<V> {
 }
 
 pub enum SaveData {
-    ToFile(String),
-    ToNewFile(String),
+    ToCsv(String),
+    ToNewCsv(String),
+    ToJson(String),
+    ToNewJson(String),
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -91,17 +94,52 @@ impl Logger {
     
         Ok(())
     }
-    /*
-    fn read_csv_file(file_location: &String) -> Result<Vec<LogMessage>, csv::Error> {
-        let mut records: Vec<LogMessage> = vec![];
+
+    fn create_json(file_location: &String) -> Result<(), Box<dyn std::error::Error>> {
         let file = OpenOptions::new()
             .write(true)
             .create(true)
             .truncate(true)
             .open(file_location)?;
+    
+        let empty_array = json!([]);
+        serde_json::to_writer(file, &empty_array)?;
+    
+        Ok(())
+    }
+    
+    fn append_to_json(record: LogMessage, path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+        let mut records = Self::read_json_file(&path.to_string_lossy().to_string())?;
+    
+        records.push(record);
+    
+        let file = OpenOptions::new()
+            .write(true)
+            .truncate(true)
+            .open(path)?;
+    
+        serde_json::to_writer(file, &records)?;
+    
+        Ok(())
+    }
+    
+    fn read_json_file(file_loc: &String) -> Result<Vec<LogMessage>, Box<dyn std::error::Error>> {
+        let file = File::open(file_loc)?;
+        let records: Vec<LogMessage> = serde_json::from_reader(file)?;
+        Ok(records)
+    }
+    
+    /*
+    fn read_csv_file(file_loc: &String) -> Result<Vec<LogMessage>, csv::Error> {
+        let mut records: Vec<LogMessage> = vec![];
+        let file = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(file_loc)?;
 
         let mut reader = csv::Reader::from_reader(file);
-    
+
         for record in reader.deserialize() {
             // println!("Line");
             let record: Record = record?;
@@ -126,18 +164,34 @@ impl Inspector<LogMessage> for Logger {
     fn save(&self, save_type: Option<SaveData>) {
         let mut file_loc = String::new();
         match save_type.unwrap() { 
-            SaveData::ToNewFile(file_location) => {
+            SaveData::ToNewCsv(file_location) => {
                 Logger::create_csv(&file_location);
-                file_loc = file_location;
+                for log in self.values.clone() {
+                    let file_path = Path::new(&file_location);
+                    Logger::append_to_csv(log, &file_path);
+                }
             },
-            SaveData::ToFile(file_location) => {
-                file_loc = file_location;
+            SaveData::ToCsv(file_location) => {
+                for log in self.values.clone() {
+                    let file_path = Path::new(&file_location);
+                    Logger::append_to_csv(log, &file_path);
+                }
             },
-        }
+            
+            SaveData::ToNewJson(file_location) => {
+                Logger::create_json(&file_location);
+                for log in self.values.clone() {
+                    let file_path = Path::new(&file_location);
+                    Logger::append_to_json(log, &file_path);
+                }
+            },
 
-        for log in self.values.clone() {
-            let file_path = Path::new(&file_loc);
-            Logger::append_to_csv(log, &file_path);
+            SaveData::ToJson(file_location) => {
+                for log in self.values.clone() {
+                    let file_path = Path::new(&file_location);
+                    Logger::append_to_json(log, &file_path);
+                }
+            }
         }
     }
 }
