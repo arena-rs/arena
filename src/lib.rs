@@ -18,7 +18,7 @@ pub mod engine;
 use alloy::{
     network::{Ethereum, EthereumWallet},
     node_bindings::{Anvil, AnvilInstance},
-    primitives::{Address, Bytes},
+    primitives::{Address, Bytes, U256},
     providers::{
         fillers::{ChainIdFiller, FillProvider, GasFiller, JoinFill, NonceFiller, WalletFiller},
         Identity, RootProvider,
@@ -43,6 +43,10 @@ mod types {
     #![allow(clippy::too_many_arguments)]
     use alloy_sol_macro::sol;
 
+    use crate::types::{
+        Fetcher::PoolKey as FetcherPoolKey, PoolManager::PoolKey as ManagerPoolKey,
+    };
+
     sol! {
         #[sol(rpc)]
         #[derive(Debug, Default)]
@@ -63,6 +67,37 @@ mod types {
         ArenaToken,
         "src/artifacts/ArenaToken.json"
     }
+
+    sol! {
+        #[sol(rpc)]
+        #[derive(Debug)]
+        Fetcher,
+        "src/artifacts/Fetcher.json"
+    }
+
+    impl From<FetcherPoolKey> for ManagerPoolKey {
+        fn from(fetcher: FetcherPoolKey) -> Self {
+            ManagerPoolKey {
+                currency0: fetcher.currency0,
+                currency1: fetcher.currency1,
+                fee: fetcher.fee,
+                tickSpacing: fetcher.tickSpacing,
+                hooks: fetcher.hooks,
+            }
+        }
+    }
+
+    impl From<ManagerPoolKey> for FetcherPoolKey {
+        fn from(manager: ManagerPoolKey) -> Self {
+            FetcherPoolKey {
+                currency0: manager.currency0,
+                currency1: manager.currency1,
+                fee: manager.fee,
+                tickSpacing: manager.tickSpacing,
+                hooks: manager.hooks,
+            }
+        }
+    }
 }
 
 /// A signal that is passed to a [`Strategy`] to provide information about the current state of the pool.
@@ -79,16 +114,31 @@ pub struct Signal {
 
     /// Current step of the simulation.
     pub step: Option<usize>,
+
+    /// Current tick of the pool.
+    pub tick: i32,
+
+    /// Current price of the pool.
+    pub sqrt_price_x96: U256,
 }
 
 impl Signal {
     /// Public constructor function for a new [`Signal`].
-    pub fn new(manager: Address, pool: PoolKey, current_value: f64, step: Option<usize>) -> Self {
+    pub fn new(
+        manager: Address,
+        pool: PoolKey,
+        current_value: f64,
+        step: Option<usize>,
+        tick: i32,
+        sqrt_price_x96: U256,
+    ) -> Self {
         Self {
             manager,
             pool,
             current_value,
             step,
+            tick,
+            sqrt_price_x96,
         }
     }
 }

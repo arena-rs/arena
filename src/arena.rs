@@ -8,7 +8,7 @@ use crate::{
     engine::{arbitrageur::Arbitrageur, inspector::Inspector},
     feed::Feed,
     strategy::Strategy,
-    types::{ArenaToken, LiquidExchange, PoolManager, PoolManager::PoolKey},
+    types::{ArenaToken, Fetcher, LiquidExchange, PoolManager, PoolManager::PoolKey},
 };
 
 /// Represents an [`Arena`] that can be used to run a simulation and execute strategies.
@@ -43,6 +43,8 @@ impl<V> Arena<V> {
             .await
             .unwrap();
 
+        let fetcher = Fetcher::deploy(admin_provider.clone()).await.unwrap();
+
         let currency_0 = ArenaToken::deploy(
             admin_provider.clone(),
             String::from("Currency 0"),
@@ -70,9 +72,9 @@ impl<V> Arena<V> {
         .await
         .unwrap();
 
-        if *currency_1.address() < *currency_0.address() {
-            self.pool.currency0 = *currency_1.address();
-            self.pool.currency1 = *currency_0.address();
+        if *currency_1.address() > *currency_0.address() {
+            (self.pool.currency0, self.pool.currency1) =
+                (*currency_0.address(), *currency_1.address());
         }
 
         pool_manager
@@ -84,8 +86,19 @@ impl<V> Arena<V> {
             .call()
             .await
             .unwrap();
+        // .watch()
+        // .await
+        // .unwrap();
 
         for (idx, strategy) in self.strategies.iter_mut().enumerate() {
+            let id = fetcher.toId(self.pool.clone().into()).call().await.unwrap();
+
+            let slot = fetcher
+                .getSlot0(*pool_manager.address(), id.poolId)
+                .call()
+                .await
+                .unwrap();
+
             strategy.init(
                 self.providers[&(idx + 1)].clone(),
                 Signal::new(
@@ -93,17 +106,29 @@ impl<V> Arena<V> {
                     self.pool.clone(),
                     self.feed.current_value(),
                     None,
+                    slot.tick,
+                    slot.sqrtPriceX96,
                 ),
                 &mut self.inspector,
             );
         }
 
         for step in 0..config.steps {
+            let id = fetcher.toId(self.pool.clone().into()).call().await.unwrap();
+
+            let slot = fetcher
+                .getSlot0(*pool_manager.address(), id.poolId)
+                .call()
+                .await
+                .unwrap();
+
             let signal = Signal::new(
                 *pool_manager.address(),
                 self.pool.clone(),
                 self.feed.current_value(),
                 Some(step),
+                slot.tick,
+                slot.sqrtPriceX96,
             );
 
             liquid_exchange

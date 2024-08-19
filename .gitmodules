@@ -10,3 +10,6 @@
 [submodule "contracts/utils/lib/solmate"]
 	path = contracts/utils/lib/solmate
 	url = https://github.com/tranmissions11/solmate
+[submodule "contracts/utils/lib/v4-core"]
+	path = contracts/utils/lib/v4-core
+	url = https://github.com/uniswap/v4-core
