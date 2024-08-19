@@ -32,6 +32,8 @@ pub struct Arena<V> {
     pub arbitrageur: Box<dyn Arbitrageur>,
 
     providers: HashMap<usize, AnvilProvider>,
+
+    nonce: u64,
 }
 
 impl<V> Arena<V> {
@@ -77,18 +79,18 @@ impl<V> Arena<V> {
                 (*currency_0.address(), *currency_1.address());
         }
 
-        pool_manager
+        let call = pool_manager
             .initialize(
                 self.pool.clone(),
                 U256::from(79228162514264337593543950336_u128),
                 Bytes::default(),
-            )
-            .call()
+            ).nonce(5)
+            .send()
+            .await
+            .unwrap()
+            .watch()
             .await
             .unwrap();
-        // .watch()
-        // .await
-        // .unwrap();
 
         for (idx, strategy) in self.strategies.iter_mut().enumerate() {
             let id = fetcher.toId(self.pool.clone().into()).call().await.unwrap();
@@ -113,6 +115,8 @@ impl<V> Arena<V> {
             );
         }
 
+        self.nonce = 6;
+
         for step in 0..config.steps {
             let id = fetcher.toId(self.pool.clone().into()).call().await.unwrap();
 
@@ -135,12 +139,15 @@ impl<V> Arena<V> {
                 .setPrice(
                     alloy::primitives::utils::parse_ether(&self.feed.step().to_string()).unwrap(),
                 )
+                .nonce(self.nonce)
                 .send()
                 .await
                 .unwrap()
                 .watch()
                 .await
                 .unwrap();
+
+            self.nonce += 1;
 
             self.arbitrageur.arbitrage(&signal, admin_provider.clone());
 
@@ -267,6 +274,7 @@ impl<V> ArenaBuilder<V> {
             feed: self.feed.unwrap(),
             inspector: self.inspector.unwrap(),
             arbitrageur: self.arbitrageur.unwrap(),
+            nonce: 0,
             providers,
         }
     }

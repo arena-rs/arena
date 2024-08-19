@@ -189,6 +189,6 @@ mod tests {
             .with_arbitrageur(Box::new(EmptyArbitrageur {}))
             .build();
 
-        arena.run(Config::new(1)).await;
+        arena.run(Config::new(2)).await;
     }
 }
