@@ -59,16 +59,29 @@ impl Feed for OrnsteinUhlenbeck {
 }
 
 #[derive(Debug)]
+/// Implementation of a geometric Brownian motion using a Euler-Maruyama discretization scheme.
 pub struct GeometricBrownianMotion {
-    initial_value: f64,
-    current_value: f64,
-    current_time: f64,
-    mu: f64,
-    sigma: f64,
-    dt: f64,
+    /// The initial value of the process.
+    pub initial_value: f64,
+
+    /// The current value of the process.
+    pub current_value: f64,
+
+    /// The current time in the process, incremented with each step by the time step `dt`.
+    pub current_time: f64,
+
+    /// The drift coefficient.
+    pub mu: f64,
+
+    /// The volatility coefficient.
+    pub sigma: f64,
+
+    /// The time step size used for advancing the process.
+    pub dt: f64,
 }
 
 impl GeometricBrownianMotion {
+    /// Public constructor function for a new [`GeometricBrownianMotion`].
     pub fn new(initial_value: f64, mu: f64, sigma: f64, dt: f64) -> Self {
         GeometricBrownianMotion {
             initial_value,

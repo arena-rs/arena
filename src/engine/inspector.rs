@@ -1,6 +1,4 @@
-use std::collections::HashMap;
-
-use plotly::{Plot, Scatter};
+// use plotly::{Plot, Scatter};
 
 /// Trait allowing custom behavior to be defined for logging and inspecting values.
 pub trait Inspector<V> {
@@ -12,6 +10,17 @@ pub trait Inspector<V> {
 
     /// Save the inspector state.
     fn save(&self);
+}
+
+/// No-op implementation of an [`Inspector`] for custom usecases.
+pub struct EmptyInspector;
+
+impl Inspector<f64> for EmptyInspector {
+    fn inspect(&self, _step: usize) -> Option<f64> {
+        None
+    }
+    fn log(&mut self, _value: f64) {}
+    fn save(&self) {}
 }
 
 // pub struct Plotter {

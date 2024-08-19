@@ -12,12 +12,13 @@ pub mod feed;
 /// Defines the base strategy trait.
 pub mod strategy;
 
+/// Defines core simulation logic types, such as an [`Arbitrageur`].
 pub mod engine;
 
 use alloy::{
     network::{Ethereum, EthereumWallet},
     node_bindings::{Anvil, AnvilInstance},
-    primitives::{Address, Bytes, U256},
+    primitives::{Address, Bytes},
     providers::{
         fillers::{ChainIdFiller, FillProvider, GasFiller, JoinFill, NonceFiller, WalletFiller},
         Identity, RootProvider,
@@ -39,9 +40,9 @@ pub type AnvilProvider = FillProvider<
 >;
 
 mod types {
+    #![allow(clippy::too_many_arguments)]
     use alloy_sol_macro::sol;
 
-    #[allow(missing_docs)]
     sol! {
         #[sol(rpc)]
         #[derive(Debug, Default)]
@@ -49,7 +50,6 @@ mod types {
         "src/artifacts/PoolManager.json"
     }
 
-    #[allow(missing_docs)]
     sol! {
         #[sol(rpc)]
         #[derive(Debug)]
@@ -57,7 +57,6 @@ mod types {
         "src/artifacts/LiquidExchange.json"
     }
 
-    #[allow(missing_docs)]
     sol! {
         #[sol(rpc)]
         #[derive(Debug)]
@@ -100,26 +99,15 @@ mod tests {
     use crate::{
         arena::{Arena, ArenaBuilder},
         config::Config,
+        engine::{
+            arbitrageur::{Arbitrageur, EmptyArbitrageur},
+            inspector::EmptyInspector,
+        },
         feed::OrnsteinUhlenbeck,
         strategy::Strategy,
     };
-    use crate::engine::arbitrageur::Arbitrageur;
 
     struct StrategyMock;
-    struct InspectorMock;
-    struct ArbitrageurMock;
-
-    impl Arbitrageur for ArbitrageurMock {
-        fn arbitrage(&self, _signal: &Signal, _provider: AnvilProvider) {}
-    }
-
-    impl Inspector<f64> for InspectorMock {
-        fn inspect(&self, _step: usize) -> Option<f64> {
-            None
-        }
-        fn log(&mut self, _value: f64) {}
-        fn save(&self) {}
-    }
 
     impl<V> Strategy<V> for StrategyMock {
         fn init(
@@ -147,8 +135,8 @@ mod tests {
             .with_fee(4000)
             .with_tick_spacing(2)
             .with_feed(Box::new(OrnsteinUhlenbeck::new(0.1, 0.1, 0.1, 0.1, 0.1)))
-            .with_inspector(Box::new(InspectorMock {}))
-            .with_arbitrageur(Box::new(ArbitrageurMock {}))
+            .with_inspector(Box::new(EmptyInspector {}))
+            .with_arbitrageur(Box::new(EmptyArbitrageur {}))
             .build();
 
         arena.run(Config::new(1)).await;
