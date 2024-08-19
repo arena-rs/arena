@@ -28,7 +28,7 @@ The price of the simulation's underlying pool is set via a price process that im
 
 ## Usage
 
-To use Arena, the Rust programming language must be installed on your machine. This is commonly achieved using `rustup`.
+To use Arena, the Rust programming language alongside the Foundry framework must be installed on your machine. This is commonly achieved using [`rustup`](https://rustup.rs/), and [`foundryup`](https://book.getfoundry.sh/getting-started/installation)
 
 Arena can be added to your library or binary with 
 ```
