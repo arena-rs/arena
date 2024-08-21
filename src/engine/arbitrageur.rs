@@ -36,6 +36,12 @@ impl Arbitrageur for DefaultArbitrageur {
                 end.to_i32_saturating().unwrap(),
             )
             .await;
+
+        let k = a.clone() * b.clone();
+
+        // closed form optimal swap solution, ref: https://arxiv.org/pdf/1911.03380
+        let optimal_swap =
+            Float::with_val(53, 0).max(&(a.clone() - (k / (signal.pool.fee * (a / b)))));
     }
 }
 
