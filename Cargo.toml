@@ -5,6 +5,7 @@ edition = "2021"
 repository = "https://github.com/arena-rs/arena"
 description = "Framework for holistic economic modelling and simulation of Uniswap v4 strategies, hooks and pools."
 license-file = "./LICENSE"
+exclude = ["contracts"]
 
 [dependencies]
 alloy = { version = "0.2.1", features = ["full", "node-bindings", "json"] }
