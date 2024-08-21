@@ -106,6 +106,9 @@ pub struct Signal {
     /// Address of the pool manager.
     pub manager: Address,
 
+    /// Address of the fetcher.
+    pub fetcher: Address,
+
     /// Key of the pool.
     pub pool: PoolKey,
 
@@ -126,6 +129,7 @@ impl Signal {
     /// Public constructor function for a new [`Signal`].
     pub fn new(
         manager: Address,
+        fetcher: Address,
         pool: PoolKey,
         current_value: f64,
         step: Option<usize>,
@@ -134,6 +138,7 @@ impl Signal {
     ) -> Self {
         Self {
             manager,
+            fetcher,
             pool,
             current_value,
             step,
@@ -150,7 +155,7 @@ mod tests {
         arena::{Arena, ArenaBuilder},
         config::Config,
         engine::{
-            arbitrageur::{Arbitrageur, EmptyArbitrageur},
+            arbitrageur::{Arbitrageur, DefaultArbitrageur, EmptyArbitrageur},
             inspector::EmptyInspector,
         },
         feed::OrnsteinUhlenbeck,

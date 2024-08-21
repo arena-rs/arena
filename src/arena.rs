@@ -84,7 +84,8 @@ impl<V> Arena<V> {
                 self.pool.clone(),
                 U256::from(79228162514264337593543950336_u128),
                 Bytes::default(),
-            ).nonce(5)
+            )
+            .nonce(5)
             .send()
             .await
             .unwrap()
@@ -105,6 +106,7 @@ impl<V> Arena<V> {
                 self.providers[&(idx + 1)].clone(),
                 Signal::new(
                     *pool_manager.address(),
+                    *fetcher.address(),
                     self.pool.clone(),
                     self.feed.current_value(),
                     None,
@@ -128,6 +130,7 @@ impl<V> Arena<V> {
 
             let signal = Signal::new(
                 *pool_manager.address(),
+                *fetcher.address(),
                 self.pool.clone(),
                 self.feed.current_value(),
                 Some(step),
@@ -149,7 +152,9 @@ impl<V> Arena<V> {
 
             self.nonce += 1;
 
-            self.arbitrageur.arbitrage(&signal, admin_provider.clone());
+            self.arbitrageur
+                .arbitrage(&signal, admin_provider.clone())
+                .await;
 
             for (idx, strategy) in self.strategies.iter_mut().enumerate() {
                 strategy.process(
