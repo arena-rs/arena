@@ -1,7 +1,13 @@
+use std::{cmp::Ordering, str::FromStr};
+
+use alloy::primitives::Signed;
 use async_trait::async_trait;
 use rug::{ops::Pow, Float};
 
-use crate::{types::Fetcher, AnvilProvider, Signal};
+use crate::{
+    types::{Fetcher, PoolManager::SwapParams},
+    AnvilProvider, Signal,
+};
 
 /// Generic trait allowing user defined arbitrage strategies.
 #[async_trait]
@@ -23,9 +29,9 @@ impl Arbitrageur for DefaultArbitrageur {
         let current_tick = Float::with_val(53, signal.tick);
 
         let (start, end) = if current_tick < target_tick {
-            (current_tick, target_tick)
+            (current_tick.clone(), target_tick.clone())
         } else {
-            (target_tick, current_tick)
+            (target_tick.clone(), current_tick.clone())
         };
 
         let (a, b) = self
@@ -42,6 +48,14 @@ impl Arbitrageur for DefaultArbitrageur {
         // closed form optimal swap solution, ref: https://arxiv.org/pdf/1911.03380
         let optimal_swap =
             Float::with_val(53, 0).max(&(a.clone() - (k / (signal.pool.fee * (a / b)))));
+
+        let zero_for_one = &current_tick > &target_tick;
+
+        let swap_params = SwapParams {
+            amountSpecified: Signed::from_str(&optimal_swap.to_string()).unwrap(),
+            zeroForOne: zero_for_one,
+            sqrtPriceLimitX96: signal.sqrt_price_x96,
+        };
     }
 }
 
