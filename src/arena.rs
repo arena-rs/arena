@@ -79,7 +79,7 @@ impl<V> Arena<V> {
                 (*currency_0.address(), *currency_1.address());
         }
 
-        let call = pool_manager
+        pool_manager
             .initialize(
                 self.pool.clone(),
                 U256::from(79228162514264337593543950336_u128),
@@ -188,8 +188,6 @@ pub struct ArenaBuilder<V> {
 
     /// [`Arena::arbitrageur`]
     pub arbitrageur: Option<Box<dyn Arbitrageur>>,
-
-    providers: Option<HashMap<usize, AnvilProvider>>,
 }
 
 impl<V> Default for ArenaBuilder<V> {
@@ -206,7 +204,6 @@ impl<V> ArenaBuilder<V> {
             strategies: Vec::new(),
             pool: PoolKey::default(),
             feed: None,
-            providers: None,
             inspector: None,
             arbitrageur: None,
         }

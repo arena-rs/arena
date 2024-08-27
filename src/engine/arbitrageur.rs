@@ -1,27 +1,45 @@
-use std::{cmp::Ordering, str::FromStr};
+use std::str::FromStr;
 
-use alloy::primitives::Signed;
+use alloy::primitives::{Address, Bytes, Signed};
 use async_trait::async_trait;
 use rug::{ops::Pow, Float};
 
 use crate::{
-    types::{Fetcher, PoolManager::SwapParams},
+    types::{
+        Fetcher, PoolSwapTest,
+        PoolSwapTest::{SwapParams, TestSettings},
+    },
     AnvilProvider, Signal,
 };
 
 /// Generic trait allowing user defined arbitrage strategies.
 #[async_trait]
 pub trait Arbitrageur {
+    /// Initialixe arbitrageur agent.
+    async fn init(&mut self, signal: &Signal, provider: AnvilProvider);
+
     /// Perform an arbitrage based on a [`Signal`].
-    async fn arbitrage(&self, signal: &Signal, provider: AnvilProvider);
+    async fn arbitrage(&mut self, signal: &Signal, provider: AnvilProvider);
 }
 
 /// Default implementation of an [`Arbitrageur`] that uses the closed-form optimal swap amount to determine the optimal arbitrage.
-pub struct DefaultArbitrageur;
+pub struct DefaultArbitrageur {
+    swapper: Address,
+}
 
 #[async_trait]
 impl Arbitrageur for DefaultArbitrageur {
-    async fn arbitrage(&self, signal: &Signal, provider: AnvilProvider) {
+    async fn init(&mut self, signal: &Signal, provider: AnvilProvider) {
+        let swapper = PoolSwapTest::deploy(provider.clone(), signal.manager)
+            .await
+            .unwrap();
+
+        self.swapper = *swapper.address();
+    }
+
+    async fn arbitrage(&mut self, signal: &Signal, provider: AnvilProvider) {
+        let swapper = PoolSwapTest::new(self.swapper, provider.clone());
+
         let base = Float::with_val(53, 1.0001);
         let price = Float::with_val(53, signal.current_value);
 
@@ -49,13 +67,32 @@ impl Arbitrageur for DefaultArbitrageur {
         let optimal_swap =
             Float::with_val(53, 0).max(&(a.clone() - (k / (signal.pool.fee * (a / b)))));
 
-        let zero_for_one = &current_tick > &target_tick;
+        let zero_for_one = current_tick > target_tick;
 
         let swap_params = SwapParams {
             amountSpecified: Signed::from_str(&optimal_swap.to_string()).unwrap(),
             zeroForOne: zero_for_one,
             sqrtPriceLimitX96: signal.sqrt_price_x96,
         };
+
+        let test_settings = TestSettings {
+            takeClaims: false,
+            settleUsingBurn: false,
+        };
+
+        swapper
+            .swap(
+                signal.pool.clone().into(),
+                swap_params,
+                test_settings,
+                Bytes::new(),
+            )
+            .send()
+            .await
+            .unwrap()
+            .watch()
+            .await
+            .unwrap();
     }
 }
 
@@ -67,7 +104,7 @@ impl DefaultArbitrageur {
         start: i32,
         end: i32,
     ) -> (Float, Float) {
-        let fetcher = Fetcher::new(signal.fetcher, provider);
+        let fetcher = Fetcher::new(signal.fetcher, provider.clone());
 
         let mut liquidity_a = Float::with_val(53, 0);
         let mut liquidity_b = Float::with_val(53, 0);
@@ -102,5 +139,6 @@ pub struct EmptyArbitrageur;
 
 #[async_trait]
 impl Arbitrageur for EmptyArbitrageur {
-    async fn arbitrage(&self, _signal: &Signal, _provider: AnvilProvider) {}
+    async fn init(&mut self, _signal: &Signal, _provider: AnvilProvider) {}
+    async fn arbitrage(&mut self, _signal: &Signal, _provider: AnvilProvider) {}
 }

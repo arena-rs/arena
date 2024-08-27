@@ -5,11 +5,20 @@ edition = "2021"
 repository = "https://github.com/arena-rs/arena"
 description = "Framework for holistic economic modelling and simulation of Uniswap v4 strategies, hooks and pools."
 license-file = "./LICENSE"
-exclude = ["contracts"]
+exclude = ["contracts", "cli"]
+
+[lib]
+name = "libarena"
+path = "src/lib.rs"
+
+[[bin]]
+name = "arena"
+path = "src/bin/cli.rs"
 
 [dependencies]
 rug = "1.25.0"
 rand = "0.8.5"
+clap = { version = "4.5.16", features = ["derive"] }
 plotly = "0.9.0"
 rand_distr = "0.4.3"
 async-trait = "0.1.81"

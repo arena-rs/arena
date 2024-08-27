@@ -1,4 +1,5 @@
 #![warn(missing_docs)]
+//! Arena
 
 /// Defines the main simulation runtime.
 pub mod arena;
@@ -45,6 +46,7 @@ mod types {
 
     use crate::types::{
         Fetcher::PoolKey as FetcherPoolKey, PoolManager::PoolKey as ManagerPoolKey,
+        PoolSwapTest::PoolKey as SwapPoolKey,
     };
 
     sol! {
@@ -75,6 +77,13 @@ mod types {
         "src/artifacts/Fetcher.json"
     }
 
+    sol! {
+        #[sol(rpc)]
+        #[derive(Debug)]
+        PoolSwapTest,
+        "src/artifacts/PoolSwapTest.json"
+    }
+
     impl From<FetcherPoolKey> for ManagerPoolKey {
         fn from(fetcher: FetcherPoolKey) -> Self {
             ManagerPoolKey {
@@ -90,6 +99,30 @@ mod types {
     impl From<ManagerPoolKey> for FetcherPoolKey {
         fn from(manager: ManagerPoolKey) -> Self {
             FetcherPoolKey {
+                currency0: manager.currency0,
+                currency1: manager.currency1,
+                fee: manager.fee,
+                tickSpacing: manager.tickSpacing,
+                hooks: manager.hooks,
+            }
+        }
+    }
+
+    impl From<SwapPoolKey> for ManagerPoolKey {
+        fn from(swap: SwapPoolKey) -> Self {
+            ManagerPoolKey {
+                currency0: swap.currency0,
+                currency1: swap.currency1,
+                fee: swap.fee,
+                tickSpacing: swap.tickSpacing,
+                hooks: swap.hooks,
+            }
+        }
+    }
+
+    impl From<ManagerPoolKey> for SwapPoolKey {
+        fn from(manager: ManagerPoolKey) -> Self {
+            SwapPoolKey {
                 currency0: manager.currency0,
                 currency1: manager.currency1,
                 fee: manager.fee,
