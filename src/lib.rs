@@ -1,4 +1,5 @@
 #![warn(missing_docs)]
+//! Arena
 
 /// Defines the main simulation runtime.
 pub mod arena;
@@ -12,6 +13,7 @@ pub mod feed;
 /// Defines the base strategy trait.
 pub mod strategy;
 
+/// Defines core simulation logic types, such as an [`Arbitrageur`].
 pub mod engine;
 
 use alloy::{
@@ -40,9 +42,14 @@ pub type AnvilProvider = FillProvider<
 >;
 
 mod types {
+    #![allow(clippy::too_many_arguments)]
     use alloy_sol_macro::sol;
 
-    #[allow(missing_docs)]
+    use crate::types::{
+        Fetcher::PoolKey as FetcherPoolKey, PoolManager::PoolKey as ManagerPoolKey,
+        PoolSwapTest::PoolKey as SwapPoolKey,
+    };
+
     sol! {
         #[sol(rpc)]
         #[derive(Debug, Default)]
@@ -50,7 +57,6 @@ mod types {
         "src/artifacts/PoolManager.json"
     }
 
-    #[allow(missing_docs)]
     sol! {
         #[sol(rpc)]
         #[derive(Debug)]
@@ -58,20 +64,84 @@ mod types {
         "src/artifacts/LiquidExchange.json"
     }
 
-    #[allow(missing_docs)]
     sol! {
         #[sol(rpc)]
         #[derive(Debug)]
         ArenaToken,
         "src/artifacts/ArenaToken.json"
     }
+
+    sol! {
+        #[sol(rpc)]
+        #[derive(Debug)]
+        Fetcher,
+        "src/artifacts/Fetcher.json"
+    }
+
+    sol! {
+        #[sol(rpc)]
+        #[derive(Debug)]
+        PoolSwapTest,
+        "src/artifacts/PoolSwapTest.json"
+    }
+
+    impl From<FetcherPoolKey> for ManagerPoolKey {
+        fn from(fetcher: FetcherPoolKey) -> Self {
+            ManagerPoolKey {
+                currency0: fetcher.currency0,
+                currency1: fetcher.currency1,
+                fee: fetcher.fee,
+                tickSpacing: fetcher.tickSpacing,
+                hooks: fetcher.hooks,
+            }
+        }
+    }
+
+    impl From<ManagerPoolKey> for FetcherPoolKey {
+        fn from(manager: ManagerPoolKey) -> Self {
+            FetcherPoolKey {
+                currency0: manager.currency0,
+                currency1: manager.currency1,
+                fee: manager.fee,
+                tickSpacing: manager.tickSpacing,
+                hooks: manager.hooks,
+            }
+        }
+    }
+
+    impl From<SwapPoolKey> for ManagerPoolKey {
+        fn from(swap: SwapPoolKey) -> Self {
+            ManagerPoolKey {
+                currency0: swap.currency0,
+                currency1: swap.currency1,
+                fee: swap.fee,
+                tickSpacing: swap.tickSpacing,
+                hooks: swap.hooks,
+            }
+        }
+    }
+
+    impl From<ManagerPoolKey> for SwapPoolKey {
+        fn from(manager: ManagerPoolKey) -> Self {
+            SwapPoolKey {
+                currency0: manager.currency0,
+                currency1: manager.currency1,
+                fee: manager.fee,
+                tickSpacing: manager.tickSpacing,
+                hooks: manager.hooks,
+            }
+        }
+    }
 }
 
 /// A signal that is passed to a [`Strategy`] to provide information about the current state of the pool.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Signal {
     /// Address of the pool manager.
     pub manager: Address,
+
+    /// Address of the fetcher.
+    pub fetcher: Address,
 
     /// Key of the pool.
     pub pool: PoolKey,
@@ -81,16 +151,33 @@ pub struct Signal {
 
     /// Current step of the simulation.
     pub step: Option<usize>,
+
+    /// Current tick of the pool.
+    pub tick: i32,
+
+    /// Current price of the pool.
+    pub sqrt_price_x96: U256,
 }
 
 impl Signal {
     /// Public constructor function for a new [`Signal`].
-    pub fn new(manager: Address, pool: PoolKey, current_value: f64, step: Option<usize>) -> Self {
+    pub fn new(
+        manager: Address,
+        fetcher: Address,
+        pool: PoolKey,
+        current_value: f64,
+        step: Option<usize>,
+        tick: i32,
+        sqrt_price_x96: U256,
+    ) -> Self {
         Self {
             manager,
+            fetcher,
             pool,
             current_value,
             step,
+            tick,
+            sqrt_price_x96,
         }
     }
 }
@@ -101,26 +188,15 @@ mod tests {
     use crate::{
         arena::{Arena, ArenaBuilder},
         config::Config,
+        engine::{
+            arbitrageur::{Arbitrageur, DefaultArbitrageur, EmptyArbitrageur},
+            inspector::EmptyInspector,
+        },
         feed::OrnsteinUhlenbeck,
         strategy::Strategy,
     };
-    use crate::engine::arbitrageur::Arbitrageur;
 
     struct StrategyMock;
-    struct InspectorMock;
-    struct ArbitrageurMock;
-
-    impl Arbitrageur for ArbitrageurMock {
-        fn arbitrage(&self, _signal: &Signal, _provider: AnvilProvider) {}
-    }
-
-    impl Inspector<f64> for InspectorMock {
-        fn inspect(&self, _step: usize) -> Option<f64> {
-            None
-        }
-        fn log(&mut self, _value: f64) {}
-        fn save(&self, save_type: Option<SaveData>) {}
-    }
 
     impl<V> Strategy<V> for StrategyMock {
         fn init(
@@ -148,10 +224,10 @@ mod tests {
             .with_fee(4000)
             .with_tick_spacing(2)
             .with_feed(Box::new(OrnsteinUhlenbeck::new(0.1, 0.1, 0.1, 0.1, 0.1)))
-            .with_inspector(Box::new(InspectorMock {}))
-            .with_arbitrageur(Box::new(ArbitrageurMock {}))
+            .with_inspector(Box::new(EmptyInspector {}))
+            .with_arbitrageur(Box::new(DefaultArbitrageur::default()))
             .build();
 
-        arena.run(Config::new(1)).await;
+        arena.run(Config::new(2)).await;
     }
 }

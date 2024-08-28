@@ -196,6 +196,17 @@ impl Inspector<LogMessage> for Logger {
     }
 }
 
+/// No-op implementation of an [`Inspector`] for custom usecases.
+pub struct EmptyInspector;
+
+impl Inspector<f64> for EmptyInspector {
+    fn inspect(&self, _step: usize) -> Option<f64> {
+        None
+    }
+    fn log(&mut self, _value: f64) {}
+    fn save(&self) {}
+}
+
 // pub struct Plotter {
 //     values: Vec<f64>,
 // }

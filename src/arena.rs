@@ -8,7 +8,7 @@ use crate::{
     engine::{arbitrageur::Arbitrageur, inspector::Inspector},
     feed::Feed,
     strategy::Strategy,
-    types::{ArenaToken, LiquidExchange, PoolManager, PoolManager::PoolKey},
+    types::{ArenaToken, Fetcher, LiquidExchange, PoolManager, PoolManager::PoolKey},
 };
 
 /// Represents an [`Arena`] that can be used to run a simulation and execute strategies.
@@ -32,6 +32,8 @@ pub struct Arena<V> {
     pub arbitrageur: Box<dyn Arbitrageur>,
 
     providers: HashMap<usize, AnvilProvider>,
+
+    nonce: u64,
 }
 
 impl<V> Arena<V> {
@@ -42,6 +44,8 @@ impl<V> Arena<V> {
         let pool_manager = PoolManager::deploy(admin_provider.clone(), U256::from(0))
             .await
             .unwrap();
+
+        let fetcher = Fetcher::deploy(admin_provider.clone()).await.unwrap();
 
         let currency_0 = ArenaToken::deploy(
             admin_provider.clone(),
@@ -70,9 +74,9 @@ impl<V> Arena<V> {
         .await
         .unwrap();
 
-        if *currency_1.address() < *currency_0.address() {
-            self.pool.currency0 = *currency_1.address();
-            self.pool.currency1 = *currency_0.address();
+        if *currency_1.address() > *currency_0.address() {
+            (self.pool.currency0, self.pool.currency1) =
+                (*currency_0.address(), *currency_1.address());
         }
 
         pool_manager
@@ -81,35 +85,69 @@ impl<V> Arena<V> {
                 U256::from(79228162514264337593543950336_u128),
                 Bytes::default(),
             )
-            .call()
+            .nonce(5)
+            .send()
+            .await
+            .unwrap()
+            .watch()
             .await
             .unwrap();
 
+        let mut signal = Signal::default();
+
         for (idx, strategy) in self.strategies.iter_mut().enumerate() {
+            let id = fetcher.toId(self.pool.clone().into()).call().await.unwrap();
+
+            let slot = fetcher
+                .getSlot0(*pool_manager.address(), id.poolId)
+                .call()
+                .await
+                .unwrap();
+
+            signal = Signal::new(
+                *pool_manager.address(),
+                *fetcher.address(),
+                self.pool.clone(),
+                self.feed.current_value(),
+                None,
+                slot.tick,
+                slot.sqrtPriceX96,
+            );
+
             strategy.init(
                 self.providers[&(idx + 1)].clone(),
-                Signal::new(
-                    *pool_manager.address(),
-                    self.pool.clone(),
-                    self.feed.current_value(),
-                    None,
-                ),
+                signal.clone(),
                 &mut self.inspector,
             );
         }
 
+        self.arbitrageur.init(&signal, admin_provider.clone()).await;
+        self.nonce = 7;
+
         for step in 0..config.steps {
+            let id = fetcher.toId(self.pool.clone().into()).call().await.unwrap();
+
+            let slot = fetcher
+                .getSlot0(*pool_manager.address(), id.poolId)
+                .call()
+                .await
+                .unwrap();
+
             let signal = Signal::new(
                 *pool_manager.address(),
+                *fetcher.address(),
                 self.pool.clone(),
                 self.feed.current_value(),
                 Some(step),
+                slot.tick,
+                slot.sqrtPriceX96,
             );
 
             liquid_exchange
                 .setPrice(
                     alloy::primitives::utils::parse_ether(&self.feed.step().to_string()).unwrap(),
                 )
+                .nonce(self.nonce)
                 .send()
                 .await
                 .unwrap()
@@ -117,7 +155,11 @@ impl<V> Arena<V> {
                 .await
                 .unwrap();
 
-            self.arbitrageur.arbitrage(&signal, admin_provider.clone());
+            self.nonce += 1;
+
+            self.arbitrageur
+                .arbitrage(&signal, admin_provider.clone())
+                .await;
 
             for (idx, strategy) in self.strategies.iter_mut().enumerate() {
                 strategy.process(
@@ -151,8 +193,6 @@ pub struct ArenaBuilder<V> {
 
     /// [`Arena::arbitrageur`]
     pub arbitrageur: Option<Box<dyn Arbitrageur>>,
-
-    providers: Option<HashMap<usize, AnvilProvider>>,
 }
 
 impl<V> Default for ArenaBuilder<V> {
@@ -169,7 +209,6 @@ impl<V> ArenaBuilder<V> {
             strategies: Vec::new(),
             pool: PoolKey::default(),
             feed: None,
-            providers: None,
             inspector: None,
             arbitrageur: None,
         }
@@ -242,6 +281,7 @@ impl<V> ArenaBuilder<V> {
             feed: self.feed.unwrap(),
             inspector: self.inspector.unwrap(),
             arbitrageur: self.arbitrageur.unwrap(),
+            nonce: 0,
             providers,
         }
     }
