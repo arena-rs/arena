@@ -134,7 +134,7 @@ mod types {
 }
 
 /// A signal that is passed to a [`Strategy`] to provide information about the current state of the pool.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Signal {
     /// Address of the pool manager.
     pub manager: Address,

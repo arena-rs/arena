@@ -93,6 +93,8 @@ impl<V> Arena<V> {
             .await
             .unwrap();
 
+        let mut signal = Signal::default();
+
         for (idx, strategy) in self.strategies.iter_mut().enumerate() {
             let id = fetcher.toId(self.pool.clone().into()).call().await.unwrap();
 
@@ -102,21 +104,24 @@ impl<V> Arena<V> {
                 .await
                 .unwrap();
 
+            signal = Signal::new(
+                *pool_manager.address(),
+                *fetcher.address(),
+                self.pool.clone(),
+                self.feed.current_value(),
+                None,
+                slot.tick,
+                slot.sqrtPriceX96,
+            );
+
             strategy.init(
                 self.providers[&(idx + 1)].clone(),
-                Signal::new(
-                    *pool_manager.address(),
-                    *fetcher.address(),
-                    self.pool.clone(),
-                    self.feed.current_value(),
-                    None,
-                    slot.tick,
-                    slot.sqrtPriceX96,
-                ),
+                signal.clone(),
                 &mut self.inspector,
             );
         }
 
+        self.arbitrageur.init(&signal, admin_provider.clone()).await;
         self.nonce = 6;
 
         for step in 0..config.steps {
