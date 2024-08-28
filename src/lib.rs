@@ -189,7 +189,7 @@ mod tests {
         config::Config,
         engine::{
             arbitrageur::{Arbitrageur, DefaultArbitrageur, EmptyArbitrageur},
-            inspector::EmptyInspector,
+            inspector::{EmptyInspector, LogMessage, Logger},
         },
         feed::OrnsteinUhlenbeck,
         strategy::Strategy,
@@ -197,20 +197,21 @@ mod tests {
 
     struct StrategyMock;
 
-    impl<V> Strategy<V> for StrategyMock {
+    impl Strategy<LogMessage> for StrategyMock {
         fn init(
             &self,
             _provider: AnvilProvider,
             _signal: Signal,
-            _inspector: &mut Box<dyn Inspector<V>>,
+            _inspector: &mut Box<dyn Inspector<LogMessage>>,
         ) {
         }
         fn process(
             &self,
             _provider: AnvilProvider,
             _signal: Signal,
-            _inspector: &mut Box<dyn Inspector<V>>,
+            inspector: &mut Box<dyn Inspector<LogMessage>>,
         ) {
+            inspector.log(LogMessage::new(String::from("test_key"), String::from("test_value")));
         }
     }
 
@@ -218,15 +219,15 @@ mod tests {
     async fn test_arena() {
         let builder: ArenaBuilder<_> = ArenaBuilder::new();
 
-        let mut arena: Arena<f64> = builder
+        let mut arena: Arena<LogMessage> = builder
             .with_strategy(Box::new(StrategyMock {}))
             .with_fee(4000)
             .with_tick_spacing(2)
             .with_feed(Box::new(OrnsteinUhlenbeck::new(0.1, 0.1, 0.1, 0.1, 0.1)))
-            .with_inspector(Box::new(EmptyInspector {}))
-            .with_arbitrageur(Box::new(DefaultArbitrageur::default()))
+            .with_inspector(Box::new(Logger::new_csv(String::from("test.csv"))))
+            .with_arbitrageur(Box::new(EmptyArbitrageur {}))
             .build();
 
-        arena.run(Config::new(2)).await;
+        arena.run(Config::new(5)).await;
     }
 }

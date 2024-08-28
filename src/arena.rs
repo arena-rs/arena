@@ -122,7 +122,7 @@ impl<V> Arena<V> {
         }
 
         self.arbitrageur.init(&signal, admin_provider.clone()).await;
-        self.nonce = 7;
+        self.nonce = 6;
 
         for step in 0..config.steps {
             let id = fetcher.toId(self.pool.clone().into()).call().await.unwrap();

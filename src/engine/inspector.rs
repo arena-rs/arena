@@ -1,5 +1,5 @@
 use std::fs::OpenOptions;
-
+use std::io::Seek;
 use serde::{Deserialize, Serialize};
 
 /// Trait allowing custom behavior to be defined for logging and inspecting values.
@@ -73,11 +73,12 @@ impl Logger {
 
     /// Append a log message to the appropriate file format.
     fn append_to_file(&self, record: &LogMessage) -> Result<(), Box<dyn std::error::Error>> {
-        let file = OpenOptions::new()
+        let mut file = OpenOptions::new()
             .append(true)
+            .write(true)
             .create(true)
             .open(&self.file_path)?;
-
+    
         match self.format {
             LogFormat::Csv => {
                 let mut writer = csv::Writer::from_writer(file);
@@ -85,14 +86,19 @@ impl Logger {
                 writer.flush()?;
             }
             LogFormat::Json => {
-                let mut records: Vec<LogMessage> =
-                    serde_json::from_reader(&file).unwrap_or_default();
+                let mut records: Vec<LogMessage> = if file.metadata()?.len() > 0 {
+                    serde_json::from_reader(&file)?
+                } else {
+                    Vec::new()
+                };
                 records.push(record.clone());
-                serde_json::to_writer(file, &records)?;
+                file.set_len(0)?;
+                file.seek(std::io::SeekFrom::Start(0))?;
+                serde_json::to_writer_pretty(file, &records)?;
             }
         }
         Ok(())
-    }
+    }    
 }
 
 impl Inspector<LogMessage> for Logger {
