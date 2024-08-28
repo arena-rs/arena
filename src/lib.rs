@@ -28,6 +28,7 @@ use alloy::{
 };
 
 use crate::{engine::inspector::Inspector, types::PoolManager::PoolKey};
+use crate::engine::inspector::SaveData;
 
 /// Provider type that includes all necessary fillers to execute transactions on an [`Anvil`] node.
 pub type AnvilProvider = FillProvider<
