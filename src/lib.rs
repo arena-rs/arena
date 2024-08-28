@@ -224,7 +224,7 @@ mod tests {
             .with_tick_spacing(2)
             .with_feed(Box::new(OrnsteinUhlenbeck::new(0.1, 0.1, 0.1, 0.1, 0.1)))
             .with_inspector(Box::new(EmptyInspector {}))
-            .with_arbitrageur(Box::new(EmptyArbitrageur {}))
+            .with_arbitrageur(Box::new(DefaultArbitrageur::default()))
             .build();
 
         arena.run(Config::new(2)).await;

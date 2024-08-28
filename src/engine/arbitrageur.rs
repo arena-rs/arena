@@ -23,8 +23,9 @@ pub trait Arbitrageur {
 }
 
 /// Default implementation of an [`Arbitrageur`] that uses the closed-form optimal swap amount to determine the optimal arbitrage.
+#[derive(Default)]
 pub struct DefaultArbitrageur {
-    swapper: Address,
+    swapper: Option<Address>,
 }
 
 #[async_trait]
@@ -34,11 +35,12 @@ impl Arbitrageur for DefaultArbitrageur {
             .await
             .unwrap();
 
-        self.swapper = *swapper.address();
+        self.swapper = Some(*swapper.address());
     }
 
     async fn arbitrage(&mut self, signal: &Signal, provider: AnvilProvider) {
-        let swapper = PoolSwapTest::new(self.swapper, provider.clone());
+        // arbitrageur is always initialized before event loop starts, so unwrap should never fail.
+        let swapper = PoolSwapTest::new(self.swapper.unwrap(), provider.clone());
 
         let base = Float::with_val(53, 1.0001);
         let price = Float::with_val(53, signal.current_value);
