@@ -211,7 +211,10 @@ mod tests {
             _signal: Signal,
             inspector: &mut Box<dyn Inspector<LogMessage>>,
         ) {
-            inspector.log(LogMessage::new(String::from("test_key"), String::from("test_value")));
+            inspector.log(LogMessage::new(
+                String::from("test_key"),
+                String::from("test_value"),
+            ));
         }
     }
 

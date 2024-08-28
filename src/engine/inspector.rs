@@ -1,5 +1,5 @@
-use std::fs::OpenOptions;
-use std::io::Seek;
+use std::{fs::OpenOptions, io::Seek};
+
 use serde::{Deserialize, Serialize};
 
 /// Trait allowing custom behavior to be defined for logging and inspecting values.
@@ -75,10 +75,9 @@ impl Logger {
     fn append_to_file(&self, record: &LogMessage) -> Result<(), Box<dyn std::error::Error>> {
         let mut file = OpenOptions::new()
             .append(true)
-            .write(true)
             .create(true)
             .open(&self.file_path)?;
-    
+
         match self.format {
             LogFormat::Csv => {
                 let mut writer = csv::Writer::from_writer(file);
@@ -98,7 +97,7 @@ impl Logger {
             }
         }
         Ok(())
-    }    
+    }
 }
 
 impl Inspector<LogMessage> for Logger {
