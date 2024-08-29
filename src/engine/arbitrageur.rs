@@ -15,7 +15,7 @@ use crate::{
 /// Generic trait allowing user defined arbitrage strategies.
 #[async_trait]
 pub trait Arbitrageur {
-    /// Initialixe arbitrageur agent.
+    /// Initialize arbitrageur agent.
     async fn init(&mut self, signal: &Signal, provider: AnvilProvider);
 
     /// Perform an arbitrage based on a [`Signal`].

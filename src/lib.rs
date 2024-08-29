@@ -16,6 +16,9 @@ pub mod strategy;
 /// Defines core simulation logic types, such as an [`Arbitrageur`].
 pub mod engine;
 
+/// Contains error types for Arena.
+pub mod error;
+
 use alloy::{
     network::{Ethereum, EthereumWallet},
     node_bindings::{Anvil, AnvilInstance},
@@ -26,8 +29,18 @@ use alloy::{
     },
     transports::http::{Client, Http},
 };
+use types::PoolManager::PoolKey;
 
-use crate::{engine::inspector::Inspector, types::PoolManager::PoolKey};
+pub use crate::{
+    arena::{Arena, ArenaBuilder},
+    config::Config,
+    engine::{
+        arbitrageur::{Arbitrageur, DefaultArbitrageur, EmptyArbitrageur},
+        inspector::{EmptyInspector, Inspector, LogMessage, Logger},
+    },
+    feed::{Feed, GeometricBrownianMotion, OrnsteinUhlenbeck},
+    strategy::Strategy,
+};
 
 /// Provider type that includes all necessary fillers to execute transactions on an [`Anvil`] node.
 pub type AnvilProvider = FillProvider<
@@ -82,6 +95,13 @@ mod types {
         #[derive(Debug)]
         PoolSwapTest,
         "src/artifacts/PoolSwapTest.json"
+    }
+
+    sol! {
+        #[sol(rpc)]
+        #[derive(Debug)]
+        PoolModifyLiquidityTest,
+        "src/artifacts/PoolModifyLiquidityTest.json"
     }
 
     impl From<FetcherPoolKey> for ManagerPoolKey {
@@ -211,10 +231,7 @@ mod tests {
             _signal: Signal,
             inspector: &mut Box<dyn Inspector<LogMessage>>,
         ) {
-            inspector.log(LogMessage::new(
-                String::from("test_key"),
-                String::from("test_value"),
-            ));
+            inspector.log(LogMessage::new(String::from("test"), String::from("test")));
         }
     }
 
@@ -227,7 +244,7 @@ mod tests {
             .with_fee(4000)
             .with_tick_spacing(2)
             .with_feed(Box::new(OrnsteinUhlenbeck::new(0.1, 0.1, 0.1, 0.1, 0.1)))
-            .with_inspector(Box::new(Logger::new_csv(String::from("test.csv"))))
+            .with_inspector(Box::new(Logger::new_json(String::from("test1.json"))))
             .with_arbitrageur(Box::new(EmptyArbitrageur {}))
             .build();
 

@@ -690,6 +690,7 @@ dependencies = [
  "rug",
  "serde",
  "serde_json",
+ "thiserror",
  "tokio",
 ]
 

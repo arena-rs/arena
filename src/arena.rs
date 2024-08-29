@@ -6,6 +6,7 @@ use super::*;
 use crate::{
     config::Config,
     engine::{arbitrageur::Arbitrageur, inspector::Inspector},
+    error::ArenaError,
     feed::Feed,
     strategy::Strategy,
     types::{ArenaToken, Fetcher, LiquidExchange, PoolManager, PoolManager::PoolKey},
@@ -38,14 +39,16 @@ pub struct Arena<V> {
 
 impl<V> Arena<V> {
     /// Run all strategies in the simulation with a given configuration.
-    pub async fn run(&mut self, config: Config) {
+    pub async fn run(&mut self, config: Config) -> Result<(), ArenaError> {
         let admin_provider = self.providers[&0].clone();
 
         let pool_manager = PoolManager::deploy(admin_provider.clone(), U256::from(0))
             .await
-            .unwrap();
+            .map_err(ArenaError::ContractError)?;
 
-        let fetcher = Fetcher::deploy(admin_provider.clone()).await.unwrap();
+        let fetcher = Fetcher::deploy(admin_provider.clone())
+            .await
+            .map_err(ArenaError::ContractError)?;
 
         let currency_0 = ArenaToken::deploy(
             admin_provider.clone(),
@@ -54,7 +57,7 @@ impl<V> Arena<V> {
             18,
         )
         .await
-        .unwrap();
+        .map_err(ArenaError::ContractError)?;
 
         let currency_1 = ArenaToken::deploy(
             admin_provider.clone(),
@@ -63,7 +66,7 @@ impl<V> Arena<V> {
             18,
         )
         .await
-        .unwrap();
+        .map_err(ArenaError::ContractError)?;
 
         let liquid_exchange = LiquidExchange::deploy(
             admin_provider.clone(),
@@ -72,7 +75,7 @@ impl<V> Arena<V> {
             U256::from(1),
         )
         .await
-        .unwrap();
+        .map_err(ArenaError::ContractError)?;
 
         if *currency_1.address() > *currency_0.address() {
             (self.pool.currency0, self.pool.currency1) =
@@ -88,21 +91,25 @@ impl<V> Arena<V> {
             .nonce(5)
             .send()
             .await
-            .unwrap()
+            .map_err(ArenaError::ContractError)?
             .watch()
             .await
-            .unwrap();
+            .map_err(|e| ArenaError::ContractError(alloy_contract::Error::TransportError(e)))?;
 
         let mut signal = Signal::default();
 
         for (idx, strategy) in self.strategies.iter_mut().enumerate() {
-            let id = fetcher.toId(self.pool.clone().into()).call().await.unwrap();
+            let id = fetcher
+                .toId(self.pool.clone().into())
+                .call()
+                .await
+                .map_err(ArenaError::ContractError)?;
 
             let slot = fetcher
                 .getSlot0(*pool_manager.address(), id.poolId)
                 .call()
                 .await
-                .unwrap();
+                .map_err(ArenaError::ContractError)?;
 
             signal = Signal::new(
                 *pool_manager.address(),
@@ -125,13 +132,17 @@ impl<V> Arena<V> {
         self.nonce = 6;
 
         for step in 0..config.steps {
-            let id = fetcher.toId(self.pool.clone().into()).call().await.unwrap();
+            let id = fetcher
+                .toId(self.pool.clone().into())
+                .call()
+                .await
+                .map_err(ArenaError::ContractError)?;
 
             let slot = fetcher
                 .getSlot0(*pool_manager.address(), id.poolId)
                 .call()
                 .await
-                .unwrap();
+                .map_err(ArenaError::ContractError)?;
 
             let signal = Signal::new(
                 *pool_manager.address(),
@@ -145,15 +156,16 @@ impl<V> Arena<V> {
 
             liquid_exchange
                 .setPrice(
-                    alloy::primitives::utils::parse_ether(&self.feed.step().to_string()).unwrap(),
+                    alloy::primitives::utils::parse_ether(&self.feed.step().to_string())
+                        .map_err(ArenaError::ConversionError)?,
                 )
                 .nonce(self.nonce)
                 .send()
                 .await
-                .unwrap()
+                .map_err(ArenaError::ContractError)?
                 .watch()
                 .await
-                .unwrap();
+                .map_err(|e| ArenaError::ContractError(alloy_contract::Error::TransportError(e)))?;
 
             self.nonce += 1;
 
@@ -171,6 +183,8 @@ impl<V> Arena<V> {
 
             self.feed.step();
         }
+
+        Ok(())
     }
 }
 
