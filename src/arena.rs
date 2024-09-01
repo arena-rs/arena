@@ -1,6 +1,11 @@
 use std::collections::HashMap;
 
-use alloy::{primitives::{U256, Uint}, providers::ProviderBuilder, signers::local::PrivateKeySigner};
+use alloy::{
+    primitives::{Uint, U256},
+    providers::{Provider, ProviderBuilder, WalletProvider},
+    signers::local::PrivateKeySigner,
+};
+
 use super::*;
 use crate::{
     config::Config,
@@ -14,7 +19,6 @@ use crate::{
         ArenaToken, LiquidExchange,
     },
 };
-
 /// Represents an [`Arena`] that can be used to run a simulation and execute strategies.
 pub struct Arena<V> {
     /// The underlying Anvil execution environment.
@@ -36,8 +40,6 @@ pub struct Arena<V> {
     pub arbitrageur: Box<dyn Arbitrageur>,
 
     providers: HashMap<usize, AnvilProvider>,
-
-    nonce: u64,
 }
 
 #[allow(clippy::redundant_closure)]
@@ -92,7 +94,12 @@ impl<V> Arena<V> {
                 Uint::from(79228162514264337593543950336_u128),
                 Bytes::default(),
             )
-            .nonce(5)
+            .nonce(
+                admin_provider
+                    .get_transaction_count(admin_provider.default_signer_address())
+                    .await
+                    .unwrap(),
+            )
             .send()
             .await
             .map_err(ArenaError::ContractError)?
@@ -133,7 +140,6 @@ impl<V> Arena<V> {
         }
 
         self.arbitrageur.init(&signal, admin_provider.clone()).await;
-        self.nonce = 6;
 
         for step in 0..config.steps {
             let id = fetcher
@@ -163,15 +169,18 @@ impl<V> Arena<V> {
                     alloy::primitives::utils::parse_ether(&self.feed.step().to_string())
                         .map_err(ArenaError::ConversionError)?,
                 )
-                .nonce(self.nonce)
+                .nonce(
+                    admin_provider
+                        .get_transaction_count(admin_provider.default_signer_address())
+                        .await
+                        .unwrap(),
+                )
                 .send()
                 .await
                 .map_err(ArenaError::ContractError)?
                 .watch()
                 .await
                 .map_err(|e| ArenaError::PendingTransactionError(e))?;
-
-            self.nonce += 1;
 
             self.arbitrageur
                 .arbitrage(&signal, admin_provider.clone())
@@ -300,7 +309,6 @@ impl<V> ArenaBuilder<V> {
             feed: self.feed.unwrap(),
             inspector: self.inspector.unwrap(),
             arbitrageur: self.arbitrageur.unwrap(),
-            nonce: 0,
             providers,
         }
     }

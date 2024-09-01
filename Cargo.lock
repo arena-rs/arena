@@ -68,6 +68,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bb07629a5d0645d29f68d2fb6f4d0cf15c89ec0965be915f303967180929743f"
 dependencies = [
  "num_enum",
+ "serde",
  "strum",
 ]
 
@@ -701,9 +702,11 @@ name = "arena-core"
 version = "0.1.4"
 dependencies = [
  "alloy",
+ "alloy-chains",
  "alloy-contract",
  "alloy-sol-macro",
  "alloy-sol-types",
+ "alloy-transport-http",
  "async-trait",
  "clap",
  "csv",

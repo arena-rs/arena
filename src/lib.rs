@@ -18,12 +18,10 @@ pub mod engine;
 
 /// Contains error types for Arena.
 pub mod error;
-use alloy::primitives::{Signed, Uint};
-
 use alloy::{
     network::{Ethereum, EthereumWallet},
     node_bindings::{Anvil, AnvilInstance},
-    primitives::{Address, Bytes},
+    primitives::{Address, Bytes, Signed, Uint},
     providers::{
         fillers::{ChainIdFiller, FillProvider, GasFiller, JoinFill, NonceFiller, WalletFiller},
         Identity, RootProvider,
@@ -217,6 +215,8 @@ impl Signal {
 
 #[cfg(test)]
 mod tests {
+    use alloy::primitives::{Signed, Uint};
+
     use super::*;
     use crate::{
         arena::{Arena, ArenaBuilder},
@@ -228,7 +228,6 @@ mod tests {
         feed::OrnsteinUhlenbeck,
         strategy::Strategy,
     };
-
 
     struct StrategyMock;
 
@@ -255,13 +254,13 @@ mod tests {
 
         let mut arena: Arena<_> = builder
             .with_strategy(Box::new(StrategyMock {}))
-            .with_fee(4000)
-            .with_tick_spacing(2)
+            .with_fee(Uint::from(4000))
+            .with_tick_spacing(Signed::try_from(2).unwrap())
             .with_feed(Box::new(OrnsteinUhlenbeck::new(0.1, 0.1, 0.1, 0.1, 0.1)))
             .with_inspector(Box::new(EmptyInspector {}))
             .with_arbitrageur(Box::new(EmptyArbitrageur {}))
             .build();
 
-        arena.run(Config::new(5)).await;
+        arena.run(Config::new(5)).await.unwrap();
     }
 }
