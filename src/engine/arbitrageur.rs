@@ -6,8 +6,12 @@ use rug::{ops::Pow, Float};
 
 use crate::{
     types::{
-        Fetcher, PoolSwapTest,
-        PoolSwapTest::{SwapParams, TestSettings},
+        fetcher::Fetcher,
+        swap::{
+            PoolSwapTest,
+            PoolSwapTest::TestSettings,
+            IPoolManager::SwapParams
+        },
     },
     AnvilProvider, Signal,
 };
@@ -46,7 +50,7 @@ impl Arbitrageur for DefaultArbitrageur {
         let price = Float::with_val(53, signal.current_value);
 
         let target_tick = price.log10() / base.log10();
-        let current_tick = Float::with_val(53, signal.tick);
+        let current_tick = Float::with_val(53, signal.tick.as_i64());
 
         let (start, end) = if current_tick < target_tick {
             (current_tick.clone(), target_tick.clone())
@@ -66,8 +70,9 @@ impl Arbitrageur for DefaultArbitrageur {
         let k = a.clone() * b.clone();
 
         // closed form optimal swap solution, ref: https://arxiv.org/pdf/1911.03380
+        let fee: u64 = signal.pool.fee.to_string().parse().unwrap();
         let optimal_swap =
-            Float::with_val(53, 0).max(&(a.clone() - (k / (signal.pool.fee * (a / b)))));
+            Float::with_val(53, 0).max(&(a.clone() - (k / (fee * (a / b)))));
 
         let zero_for_one = current_tick > target_tick;
 
@@ -120,7 +125,7 @@ impl DefaultArbitrageur {
                 .poolId;
 
             let tick_info = fetcher
-                .getTickInfo(signal.manager, pool_id, tick)
+                .getTickInfo(signal.manager, pool_id, Signed::from_str(&tick.to_string()).unwrap())
                 .call()
                 .await
                 .unwrap();

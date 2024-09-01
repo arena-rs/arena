@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
-use alloy::{primitives::U256, providers::ProviderBuilder, signers::local::PrivateKeySigner};
-
+use alloy::{primitives::{U256, Uint}, providers::ProviderBuilder, signers::local::PrivateKeySigner};
 use super::*;
 use crate::{
     config::Config,
@@ -9,7 +8,11 @@ use crate::{
     error::ArenaError,
     feed::Feed,
     strategy::Strategy,
-    types::{ArenaToken, Fetcher, LiquidExchange, PoolManager, PoolManager::PoolKey},
+    types::{
+        fetcher::Fetcher,
+        pool_manager::{PoolManager, PoolManager::PoolKey},
+        ArenaToken, LiquidExchange,
+    },
 };
 
 /// Represents an [`Arena`] that can be used to run a simulation and execute strategies.
@@ -37,6 +40,7 @@ pub struct Arena<V> {
     nonce: u64,
 }
 
+#[allow(clippy::redundant_closure)]
 impl<V> Arena<V> {
     /// Run all strategies in the simulation with a given configuration.
     pub async fn run(&mut self, config: Config) -> Result<(), ArenaError> {
@@ -85,7 +89,7 @@ impl<V> Arena<V> {
         pool_manager
             .initialize(
                 self.pool.clone(),
-                U256::from(79228162514264337593543950336_u128),
+                Uint::from(79228162514264337593543950336_u128),
                 Bytes::default(),
             )
             .nonce(5)
@@ -94,7 +98,7 @@ impl<V> Arena<V> {
             .map_err(ArenaError::ContractError)?
             .watch()
             .await
-            .map_err(|e| ArenaError::ContractError(alloy_contract::Error::TransportError(e)))?;
+            .map_err(|e| ArenaError::PendingTransactionError(e))?;
 
         let mut signal = Signal::default();
 
@@ -165,7 +169,7 @@ impl<V> Arena<V> {
                 .map_err(ArenaError::ContractError)?
                 .watch()
                 .await
-                .map_err(|e| ArenaError::ContractError(alloy_contract::Error::TransportError(e)))?;
+                .map_err(|e| ArenaError::PendingTransactionError(e))?;
 
             self.nonce += 1;
 
@@ -235,13 +239,14 @@ impl<V> ArenaBuilder<V> {
     }
 
     /// Set the pool fee.
-    pub fn with_fee(mut self, fee: u32) -> Self {
+    pub fn with_fee(mut self, fee: Uint<24, 1>) -> Self {
+        let fee: Uint<24, 1> = fee;
         self.pool.fee = fee;
         self
     }
 
     /// Set the pool tick spacing.
-    pub fn with_tick_spacing(mut self, tick_spacing: i32) -> Self {
+    pub fn with_tick_spacing(mut self, tick_spacing: Signed<24, 1>) -> Self {
         self.pool.tickSpacing = tick_spacing;
         self
     }

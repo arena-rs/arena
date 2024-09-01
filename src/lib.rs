@@ -18,18 +18,19 @@ pub mod engine;
 
 /// Contains error types for Arena.
 pub mod error;
+use alloy::primitives::{Signed, Uint};
 
 use alloy::{
     network::{Ethereum, EthereumWallet},
     node_bindings::{Anvil, AnvilInstance},
-    primitives::{Address, Bytes, U256},
+    primitives::{Address, Bytes},
     providers::{
         fillers::{ChainIdFiller, FillProvider, GasFiller, JoinFill, NonceFiller, WalletFiller},
         Identity, RootProvider,
     },
     transports::http::{Client, Http},
 };
-use types::PoolManager::PoolKey;
+use types::pool_manager::PoolManager::PoolKey;
 
 pub use crate::{
     arena::{Arena, ArenaBuilder},
@@ -58,15 +59,19 @@ mod types {
     use alloy_sol_macro::sol;
 
     use crate::types::{
-        Fetcher::PoolKey as FetcherPoolKey, PoolManager::PoolKey as ManagerPoolKey,
-        PoolSwapTest::PoolKey as SwapPoolKey,
+        fetcher::Fetcher::PoolKey as FetcherPoolKey,
+        pool_manager::PoolManager::PoolKey as ManagerPoolKey,
+        swap::PoolSwapTest::PoolKey as SwapPoolKey,
     };
 
-    sol! {
-        #[sol(rpc)]
-        #[derive(Debug, Default)]
-        PoolManager,
-        "src/artifacts/PoolManager.json"
+    pub mod pool_manager {
+        use alloy_sol_macro::sol;
+        sol! {
+            #[sol(rpc)]
+            #[derive(Debug, Default)]
+            PoolManager,
+            "src/artifacts/PoolManager.json"
+        }
     }
 
     sol! {
@@ -83,25 +88,34 @@ mod types {
         "src/artifacts/ArenaToken.json"
     }
 
-    sol! {
-        #[sol(rpc)]
-        #[derive(Debug)]
-        Fetcher,
-        "src/artifacts/Fetcher.json"
+    pub mod fetcher {
+        use alloy_sol_macro::sol;
+        sol! {
+            #[sol(rpc)]
+            #[derive(Debug)]
+            Fetcher,
+            "src/artifacts/Fetcher.json"
+        }
     }
 
-    sol! {
-        #[sol(rpc)]
-        #[derive(Debug)]
-        PoolSwapTest,
-        "src/artifacts/PoolSwapTest.json"
+    pub mod swap {
+        use alloy_sol_macro::sol;
+        sol! {
+            #[sol(rpc)]
+            #[derive(Debug)]
+            PoolSwapTest,
+            "src/artifacts/PoolSwapTest.json"
+        }
     }
 
-    sol! {
-        #[sol(rpc)]
-        #[derive(Debug)]
-        PoolModifyLiquidityTest,
-        "src/artifacts/PoolModifyLiquidityTest.json"
+    pub mod modify_liquidity {
+        use alloy_sol_macro::sol;
+        sol! {
+            #[sol(rpc)]
+            #[derive(Debug)]
+            PoolModifyLiquidityTest,
+            "src/artifacts/PoolModifyLiquidityTest.json"
+        }
     }
 
     impl From<FetcherPoolKey> for ManagerPoolKey {
@@ -172,10 +186,10 @@ pub struct Signal {
     pub step: Option<usize>,
 
     /// Current tick of the pool.
-    pub tick: i32,
+    pub tick: Signed<24, 1>,
 
     /// Current price of the pool.
-    pub sqrt_price_x96: U256,
+    pub sqrt_price_x96: Uint<160, 3>,
 }
 
 impl Signal {
@@ -186,8 +200,8 @@ impl Signal {
         pool: PoolKey,
         current_value: f64,
         step: Option<usize>,
-        tick: i32,
-        sqrt_price_x96: U256,
+        tick: Signed<24, 1>,
+        sqrt_price_x96: Uint<160, 3>,
     ) -> Self {
         Self {
             manager,
@@ -215,23 +229,23 @@ mod tests {
         strategy::Strategy,
     };
 
+
     struct StrategyMock;
 
-    impl Strategy<LogMessage> for StrategyMock {
+    impl<T> Strategy<T> for StrategyMock {
         fn init(
             &self,
             _provider: AnvilProvider,
             _signal: Signal,
-            _inspector: &mut Box<dyn Inspector<LogMessage>>,
+            _inspector: &mut Box<dyn Inspector<T>>,
         ) {
         }
         fn process(
             &self,
             _provider: AnvilProvider,
             _signal: Signal,
-            inspector: &mut Box<dyn Inspector<LogMessage>>,
+            _inspector: &mut Box<dyn Inspector<T>>,
         ) {
-            inspector.log(LogMessage::new(String::from("test"), String::from("test")));
         }
     }
 
@@ -239,12 +253,12 @@ mod tests {
     async fn test_arena() {
         let builder: ArenaBuilder<_> = ArenaBuilder::new();
 
-        let mut arena: Arena<LogMessage> = builder
+        let mut arena: Arena<_> = builder
             .with_strategy(Box::new(StrategyMock {}))
             .with_fee(4000)
             .with_tick_spacing(2)
             .with_feed(Box::new(OrnsteinUhlenbeck::new(0.1, 0.1, 0.1, 0.1, 0.1)))
-            .with_inspector(Box::new(Logger::new_json(String::from("test1.json"))))
+            .with_inspector(Box::new(EmptyInspector {}))
             .with_arbitrageur(Box::new(EmptyArbitrageur {}))
             .build();
 

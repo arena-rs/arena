@@ -16,10 +16,10 @@ serde_json = "1.0"
 rand_distr = "0.4.3"
 thiserror = "1.0.63"
 async-trait = "0.1.81"
-alloy-contract = "0.2.1"
-alloy-sol-macro = "0.7.7"
-alloy-sol-types = "0.7.7"
+alloy-contract = "0.3.0"
+alloy-sol-macro = "0.8.0"
+alloy-sol-types = "0.8.0"
 serde = { version = "1.0", features = ["derive"] }
 clap = { version = "4.5.16", features = ["derive"] }
 tokio = { version = "1.39.2", features = ["macros"] }
-alloy = { version = "0.2.1", features = ["full", "node-bindings", "json"] }
+alloy = { version = "0.3.0", features = ["full", "node-bindings", "json"] }
