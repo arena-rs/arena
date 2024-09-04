@@ -15,6 +15,7 @@ use crate::{
     strategy::Strategy,
     types::{
         fetcher::Fetcher,
+        modify_liquidity::PoolModifyLiquidityTest,
         pool_manager::{PoolManager, PoolManager::PoolKey},
         ArenaToken, LiquidExchange,
     },
@@ -55,6 +56,17 @@ impl<V> Arena<V> {
         let fetcher = Fetcher::deploy(admin_provider.clone())
             .await
             .map_err(ArenaError::ContractError)?;
+
+        let lp_manager =
+            PoolModifyLiquidityTest::deploy(admin_provider.clone(), *pool_manager.address())
+                .await
+                .map_err(ArenaError::ContractError)?;
+
+        let engine = Engine {
+            pool: self.pool.clone().into(),
+            provider: admin_provider.clone(),
+            liquidity_manager: *lp_manager.address(),
+        };
 
         let currency_0 = ArenaToken::deploy(
             admin_provider.clone(),
@@ -136,6 +148,7 @@ impl<V> Arena<V> {
                 self.providers[&(idx + 1)].clone(),
                 signal.clone(),
                 &mut self.inspector,
+                engine.clone(),
             );
         }
 
@@ -191,6 +204,7 @@ impl<V> Arena<V> {
                     self.providers[&(idx + 1)].clone(),
                     signal.clone(),
                     &mut self.inspector,
+                    engine.clone(),
                 );
             }
 

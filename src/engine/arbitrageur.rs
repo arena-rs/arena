@@ -48,11 +48,10 @@ impl Arbitrageur for DefaultArbitrageur {
         let target_tick = price.log10() / base.log10();
         let current_tick = Float::with_val(53, signal.tick.as_i64());
 
-        let (start, end) = if current_tick < target_tick {
-            (current_tick.clone(), target_tick.clone())
-        } else {
-            (target_tick.clone(), current_tick.clone())
-        };
+        let (start, end) = (
+            current_tick.clone().min(&target_tick),
+            current_tick.clone().max(&target_tick),
+        );
 
         let (a, b) = self
             .get_tick_range_liquidity(

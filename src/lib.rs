@@ -36,6 +36,7 @@ pub use crate::{
     engine::{
         arbitrageur::{Arbitrageur, DefaultArbitrageur, EmptyArbitrageur},
         inspector::{EmptyInspector, Inspector, LogMessage, Logger},
+        Engine, PoolParameters,
     },
     feed::{Feed, GeometricBrownianMotion, OrnsteinUhlenbeck},
     strategy::Strategy,
@@ -58,6 +59,7 @@ mod types {
 
     use crate::types::{
         fetcher::Fetcher::PoolKey as FetcherPoolKey,
+        modify_liquidity::PoolModifyLiquidityTest::PoolKey as ModifyLiquidityPoolKey,
         pool_manager::PoolManager::PoolKey as ManagerPoolKey,
         swap::PoolSwapTest::PoolKey as SwapPoolKey,
     };
@@ -163,6 +165,30 @@ mod types {
             }
         }
     }
+
+    impl From<ModifyLiquidityPoolKey> for ManagerPoolKey {
+        fn from(swap: ModifyLiquidityPoolKey) -> Self {
+            ManagerPoolKey {
+                currency0: swap.currency0,
+                currency1: swap.currency1,
+                fee: swap.fee,
+                tickSpacing: swap.tickSpacing,
+                hooks: swap.hooks,
+            }
+        }
+    }
+
+    impl From<ManagerPoolKey> for ModifyLiquidityPoolKey {
+        fn from(manager: ManagerPoolKey) -> Self {
+            ModifyLiquidityPoolKey {
+                currency0: manager.currency0,
+                currency1: manager.currency1,
+                fee: manager.fee,
+                tickSpacing: manager.tickSpacing,
+                hooks: manager.hooks,
+            }
+        }
+    }
 }
 
 /// A signal that is passed to a [`Strategy`] to provide information about the current state of the pool.
@@ -216,6 +242,7 @@ impl Signal {
 #[cfg(test)]
 mod tests {
     use alloy::primitives::{Signed, Uint};
+    use async_trait::async_trait;
 
     use super::*;
     use crate::{
@@ -227,23 +254,39 @@ mod tests {
         },
         feed::OrnsteinUhlenbeck,
         strategy::Strategy,
+        types::modify_liquidity::IPoolManager::ModifyLiquidityParams,
     };
+    use alloy::primitives::FixedBytes;
 
     struct StrategyMock;
 
+    #[async_trait]
     impl<T> Strategy<T> for StrategyMock {
-        fn init(
+        async fn init(
             &self,
             _provider: AnvilProvider,
-            _signal: Signal,
+            signal: Signal,
             _inspector: &mut Box<dyn Inspector<T>>,
+            engine: Engine,
         ) {
+            let params = ModifyLiquidityParams {
+                tickLower: Signed::try_from(-2).unwrap(),
+                tickUpper: Signed::try_from(2).unwrap(),
+                liquidityDelta: Signed::try_from(1000).unwrap(),
+                salt: FixedBytes::ZERO,
+            };
+
+            engine
+                .modify_liquidity(signal.pool, params, Bytes::new())
+                .await
+                .unwrap();
         }
-        fn process(
+        async fn process(
             &self,
             _provider: AnvilProvider,
             _signal: Signal,
             _inspector: &mut Box<dyn Inspector<T>>,
+            _engine: Engine,
         ) {
         }
     }
