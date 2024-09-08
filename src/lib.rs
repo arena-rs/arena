@@ -275,7 +275,7 @@ mod tests {
                 salt: FixedBytes::ZERO,
             };
 
-            println!("{:#?}", signal);
+            println!("{:#?}", params);
 
             engine
                 .modify_liquidity(signal.pool, params, Bytes::new(), provider.clone())
