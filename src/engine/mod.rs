@@ -56,7 +56,6 @@ impl PoolParameters {
 #[derive(Debug, Clone)]
 pub struct Engine {
     pub pool: PoolParameters,
-    pub(crate) provider: AnvilProvider,
     pub(crate) liquidity_manager: Address,
 }
 
@@ -66,24 +65,26 @@ impl Engine {
         key: PoolKey,
         params: ModifyLiquidityParams,
         hook_data: Bytes,
+        provider: AnvilProvider,
     ) -> Result<(), ArenaError> {
-        let lp_manager =
-            PoolModifyLiquidityTest::new(self.liquidity_manager, self.provider.clone());
+        let lp_manager = PoolModifyLiquidityTest::new(self.liquidity_manager, provider.clone());
 
         lp_manager
-            .modifyLiquidity_0(key.into(), params, hook_data, false, false)
+            .modifyLiquidity_0(key.into(), params, hook_data, true, false)
             .nonce(
-                self.provider
-                    .get_transaction_count(self.provider.default_signer_address())
+                provider
+                    .get_transaction_count(provider.default_signer_address())
                     .await
                     .unwrap(),
             )
+            .value(U256::from(0))
             .send()
             .await
             .map_err(ArenaError::ContractError)?
             .watch()
             .await
             .map_err(|e| ArenaError::PendingTransactionError(e))?;
+
         Ok(())
     }
 }

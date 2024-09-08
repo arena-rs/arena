@@ -64,7 +64,6 @@ impl<V> Arena<V> {
 
         let engine = Engine {
             pool: self.pool.clone().into(),
-            provider: admin_provider.clone(),
             liquidity_manager: *lp_manager.address(),
         };
 
@@ -144,12 +143,86 @@ impl<V> Arena<V> {
                 slot.sqrtPriceX96,
             );
 
-            strategy.init(
-                self.providers[&(idx + 1)].clone(),
-                signal.clone(),
-                &mut self.inspector,
-                engine.clone(),
-            );
+            let strategy_provider = self.providers[&(idx + 1)].clone();
+
+            currency_0
+                .mint(strategy_provider.default_signer_address(), U256::MAX)
+                .nonce(
+                    admin_provider
+                        .get_transaction_count(admin_provider.default_signer_address())
+                        .await
+                        .unwrap(),
+                )
+                .send()
+                .await
+                .map_err(ArenaError::ContractError)?
+                .watch()
+                .await
+                .map_err(|e| ArenaError::PendingTransactionError(e))?;
+
+            println!("this 1");
+
+            currency_1
+                .mint(strategy_provider.default_signer_address(), U256::MAX)
+                .nonce(
+                    admin_provider
+                        .get_transaction_count(admin_provider.default_signer_address())
+                        .await
+                        .unwrap(),
+                )
+                .send()
+                .await
+                .map_err(ArenaError::ContractError)?
+                .watch()
+                .await
+                .map_err(|e| ArenaError::PendingTransactionError(e))?;
+
+            println!("this 2");
+
+            currency_0
+                .approve(*lp_manager.address(), U256::MAX)
+                .nonce(
+                    admin_provider
+                        .get_transaction_count(admin_provider.default_signer_address())
+                        .await
+                        .unwrap(),
+                )
+                .send()
+                .await
+                .map_err(ArenaError::ContractError)?
+                .watch()
+                .await
+                .map_err(|e| ArenaError::PendingTransactionError(e))?;
+
+            println!("this 3");
+            
+            currency_1
+                .approve(*lp_manager.address(), U256::MAX)
+                .nonce(
+                    admin_provider
+                        .get_transaction_count(admin_provider.default_signer_address())
+                        .await
+                        .unwrap(),
+                )
+                .send()
+                .await
+                .map_err(ArenaError::ContractError)?
+                .watch()
+                .await
+                .map_err(|e| ArenaError::PendingTransactionError(e))?;
+
+            println!("this 4");
+
+            strategy
+                .init(
+                    self.providers[&(idx + 1)].clone(),
+                    signal.clone(),
+                    &mut self.inspector,
+                    engine.clone(),
+                )
+                .await;
+
+            println!("this 5");
         }
 
         self.arbitrageur.init(&signal, admin_provider.clone()).await;
@@ -200,12 +273,14 @@ impl<V> Arena<V> {
                 .await;
 
             for (idx, strategy) in self.strategies.iter_mut().enumerate() {
-                strategy.process(
-                    self.providers[&(idx + 1)].clone(),
-                    signal.clone(),
-                    &mut self.inspector,
-                    engine.clone(),
-                );
+                strategy
+                    .process(
+                        self.providers[&(idx + 1)].clone(),
+                        signal.clone(),
+                        &mut self.inspector,
+                        engine.clone(),
+                    )
+                    .await;
             }
 
             self.feed.step();

@@ -241,7 +241,7 @@ impl Signal {
 
 #[cfg(test)]
 mod tests {
-    use alloy::primitives::{Signed, Uint};
+    use alloy::primitives::{FixedBytes, Signed, Uint};
     use async_trait::async_trait;
 
     use super::*;
@@ -256,7 +256,6 @@ mod tests {
         strategy::Strategy,
         types::modify_liquidity::IPoolManager::ModifyLiquidityParams,
     };
-    use alloy::primitives::FixedBytes;
 
     struct StrategyMock;
 
@@ -264,20 +263,22 @@ mod tests {
     impl<T> Strategy<T> for StrategyMock {
         async fn init(
             &self,
-            _provider: AnvilProvider,
+            provider: AnvilProvider,
             signal: Signal,
             _inspector: &mut Box<dyn Inspector<T>>,
             engine: Engine,
         ) {
             let params = ModifyLiquidityParams {
-                tickLower: Signed::try_from(-2).unwrap(),
-                tickUpper: Signed::try_from(2).unwrap(),
-                liquidityDelta: Signed::try_from(1000).unwrap(),
+                tickLower: Signed::try_from(-20).unwrap(),
+                tickUpper: Signed::try_from(20).unwrap(),
+                liquidityDelta: Signed::try_from(100000000000_u128).unwrap(),
                 salt: FixedBytes::ZERO,
             };
 
+            println!("{:#?}", signal);
+
             engine
-                .modify_liquidity(signal.pool, params, Bytes::new())
+                .modify_liquidity(signal.pool, params, Bytes::new(), provider.clone())
                 .await
                 .unwrap();
         }
