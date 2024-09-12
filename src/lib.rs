@@ -271,7 +271,7 @@ mod tests {
             let params = ModifyLiquidityParams {
                 tickLower: Signed::try_from(-20).unwrap(),
                 tickUpper: Signed::try_from(20).unwrap(),
-                liquidityDelta: Signed::try_from(100000000000_u128).unwrap(),
+                liquidityDelta: Signed::try_from(1000000_u128).unwrap(),
                 salt: FixedBytes::ZERO,
             };
 

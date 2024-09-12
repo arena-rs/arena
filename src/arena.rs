@@ -67,7 +67,7 @@ impl<V> Arena<V> {
             liquidity_manager: *lp_manager.address(),
         };
 
-        let currency_0 = ArenaToken::deploy(
+        let c_0 = ArenaToken::deploy(
             admin_provider.clone(),
             String::from("Currency 0"),
             String::from("C0"),
@@ -76,7 +76,7 @@ impl<V> Arena<V> {
         .await
         .map_err(ArenaError::ContractError)?;
 
-        let currency_1 = ArenaToken::deploy(
+        let c_1 = ArenaToken::deploy(
             admin_provider.clone(),
             String::from("Currency 1"),
             String::from("C1"),
@@ -87,16 +87,15 @@ impl<V> Arena<V> {
 
         let liquid_exchange = LiquidExchange::deploy(
             admin_provider.clone(),
-            *currency_0.address(),
-            *currency_1.address(),
+            *c_0.address(),
+            *c_1.address(),
             U256::from(1),
         )
         .await
         .map_err(ArenaError::ContractError)?;
 
-        if *currency_1.address() > *currency_0.address() {
-            (self.pool.currency0, self.pool.currency1) =
-                (*currency_0.address(), *currency_1.address());
+        if *c_1.address() > *c_0.address() {
+            (self.pool.currency0, self.pool.currency1) = (*c_0.address(), *c_1.address());
         }
 
         pool_manager
@@ -145,11 +144,14 @@ impl<V> Arena<V> {
 
             let strategy_provider = self.providers[&(idx + 1)].clone();
 
+            let currency_0 = ArenaToken::new(*c_0.address(), strategy_provider.clone());
+            let currency_1 = ArenaToken::new(*c_1.address(), strategy_provider.clone());
+
             currency_0
                 .mint(strategy_provider.default_signer_address(), U256::MAX)
                 .nonce(
-                    admin_provider
-                        .get_transaction_count(admin_provider.default_signer_address())
+                    strategy_provider
+                        .get_transaction_count(strategy_provider.default_signer_address())
                         .await
                         .unwrap(),
                 )
@@ -159,14 +161,12 @@ impl<V> Arena<V> {
                 .watch()
                 .await
                 .map_err(|e| ArenaError::PendingTransactionError(e))?;
-
-            println!("this 1");
 
             currency_1
                 .mint(strategy_provider.default_signer_address(), U256::MAX)
                 .nonce(
-                    admin_provider
-                        .get_transaction_count(admin_provider.default_signer_address())
+                    strategy_provider
+                        .get_transaction_count(strategy_provider.default_signer_address())
                         .await
                         .unwrap(),
                 )
@@ -176,14 +176,12 @@ impl<V> Arena<V> {
                 .watch()
                 .await
                 .map_err(|e| ArenaError::PendingTransactionError(e))?;
-
-            println!("this 2");
 
             currency_0
                 .approve(*lp_manager.address(), U256::MAX)
                 .nonce(
-                    admin_provider
-                        .get_transaction_count(admin_provider.default_signer_address())
+                    strategy_provider
+                        .get_transaction_count(strategy_provider.default_signer_address())
                         .await
                         .unwrap(),
                 )
@@ -194,13 +192,11 @@ impl<V> Arena<V> {
                 .await
                 .map_err(|e| ArenaError::PendingTransactionError(e))?;
 
-            println!("this 3");
-            
             currency_1
                 .approve(*lp_manager.address(), U256::MAX)
                 .nonce(
-                    admin_provider
-                        .get_transaction_count(admin_provider.default_signer_address())
+                    strategy_provider
+                        .get_transaction_count(strategy_provider.default_signer_address())
                         .await
                         .unwrap(),
                 )
@@ -210,8 +206,6 @@ impl<V> Arena<V> {
                 .watch()
                 .await
                 .map_err(|e| ArenaError::PendingTransactionError(e))?;
-
-            println!("this 4");
 
             strategy
                 .init(
@@ -221,8 +215,6 @@ impl<V> Arena<V> {
                     engine.clone(),
                 )
                 .await;
-
-            println!("this 5");
         }
 
         self.arbitrageur.init(&signal, admin_provider.clone()).await;
