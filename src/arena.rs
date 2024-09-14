@@ -1,10 +1,6 @@
 use std::collections::HashMap;
 
-use alloy::{
-    primitives::{Uint, U256},
-    providers::{Provider, ProviderBuilder, WalletProvider},
-    signers::local::PrivateKeySigner,
-};
+use alloy::{primitives::Uint, providers::ProviderBuilder, signers::local::PrivateKeySigner};
 
 use super::*;
 use crate::{
@@ -13,12 +9,7 @@ use crate::{
     error::ArenaError,
     feed::Feed,
     strategy::Strategy,
-    types::{
-        fetcher::Fetcher,
-        modify_liquidity::PoolModifyLiquidityTest,
-        pool_manager::{PoolManager, PoolManager::PoolKey},
-        ArenaToken, LiquidExchange,
-    },
+    types::controller::ArenaController,
 };
 /// Represents an [`Arena`] that can be used to run a simulation and execute strategies.
 pub struct Arena<V> {
@@ -27,9 +18,6 @@ pub struct Arena<V> {
 
     /// The strategies that are to be run in the simulation.
     pub strategies: Vec<Box<dyn Strategy<V>>>,
-
-    /// The pool that the strategies are to be run against, and the arbitrageur to peg.
-    pub pool: PoolKey,
 
     /// The feed that provides the current, theoretical value of the pool.
     pub feed: Box<dyn Feed>,
@@ -49,66 +37,15 @@ impl<V> Arena<V> {
     pub async fn run(&mut self, config: Config) -> Result<(), ArenaError> {
         let admin_provider = self.providers[&0].clone();
 
-        let pool_manager = PoolManager::deploy(admin_provider.clone(), U256::from(0))
-            .await
-            .map_err(ArenaError::ContractError)?;
+        let controller = ArenaController::deploy(admin_provider.clone(), config.fee).await?;
 
-        let fetcher = Fetcher::deploy(admin_provider.clone())
-            .await
-            .map_err(ArenaError::ContractError)?;
-
-        let lp_manager =
-            PoolModifyLiquidityTest::deploy(admin_provider.clone(), *pool_manager.address())
-                .await
-                .map_err(ArenaError::ContractError)?;
-
-        let engine = Engine {
-            pool: self.pool.clone().into(),
-            liquidity_manager: *lp_manager.address(),
-        };
-
-        let c_0 = ArenaToken::deploy(
-            admin_provider.clone(),
-            String::from("Currency 0"),
-            String::from("C0"),
-            18,
-        )
-        .await
-        .map_err(ArenaError::ContractError)?;
-
-        let c_1 = ArenaToken::deploy(
-            admin_provider.clone(),
-            String::from("Currency 1"),
-            String::from("C1"),
-            18,
-        )
-        .await
-        .map_err(ArenaError::ContractError)?;
-
-        let liquid_exchange = LiquidExchange::deploy(
-            admin_provider.clone(),
-            *c_0.address(),
-            *c_1.address(),
-            U256::from(1),
-        )
-        .await
-        .map_err(ArenaError::ContractError)?;
-
-        if *c_1.address() > *c_0.address() {
-            (self.pool.currency0, self.pool.currency1) = (*c_0.address(), *c_1.address());
-        }
-
-        pool_manager
-            .initialize(
-                self.pool.clone(),
+        controller
+            .setPool(
+                Uint::from(0),
+                Signed::try_from(2).unwrap(),
+                Address::default(),
                 Uint::from(79228162514264337593543950336_u128),
-                Bytes::default(),
-            )
-            .nonce(
-                admin_provider
-                    .get_transaction_count(admin_provider.default_signer_address())
-                    .await
-                    .unwrap(),
+                Bytes::new(),
             )
             .send()
             .await
@@ -117,158 +54,52 @@ impl<V> Arena<V> {
             .await
             .map_err(|e| ArenaError::PendingTransactionError(e))?;
 
-        let mut signal = Signal::default();
+        let engine = Engine {
+            controller: *controller.address(),
+        };
 
         for (idx, strategy) in self.strategies.iter_mut().enumerate() {
-            let id = fetcher
-                .toId(self.pool.clone().into())
-                .call()
-                .await
-                .map_err(ArenaError::ContractError)?;
-
-            let slot = fetcher
-                .getSlot0(*pool_manager.address(), id.poolId)
-                .call()
-                .await
-                .map_err(ArenaError::ContractError)?;
-
-            signal = Signal::new(
-                *pool_manager.address(),
-                *fetcher.address(),
-                self.pool.clone(),
-                self.feed.current_value(),
-                None,
-                slot.tick,
-                slot.sqrtPriceX96,
-            );
-
             let strategy_provider = self.providers[&(idx + 1)].clone();
 
-            let currency_0 = ArenaToken::new(*c_0.address(), strategy_provider.clone());
-            let currency_1 = ArenaToken::new(*c_1.address(), strategy_provider.clone());
-
-            currency_0
-                .mint(strategy_provider.default_signer_address(), U256::MAX)
-                .nonce(
-                    strategy_provider
-                        .get_transaction_count(strategy_provider.default_signer_address())
-                        .await
-                        .unwrap(),
-                )
-                .send()
-                .await
-                .map_err(ArenaError::ContractError)?
-                .watch()
-                .await
-                .map_err(|e| ArenaError::PendingTransactionError(e))?;
-
-            currency_1
-                .mint(strategy_provider.default_signer_address(), U256::MAX)
-                .nonce(
-                    strategy_provider
-                        .get_transaction_count(strategy_provider.default_signer_address())
-                        .await
-                        .unwrap(),
-                )
-                .send()
-                .await
-                .map_err(ArenaError::ContractError)?
-                .watch()
-                .await
-                .map_err(|e| ArenaError::PendingTransactionError(e))?;
-
-            currency_0
-                .approve(*lp_manager.address(), U256::MAX)
-                .nonce(
-                    strategy_provider
-                        .get_transaction_count(strategy_provider.default_signer_address())
-                        .await
-                        .unwrap(),
-                )
-                .send()
-                .await
-                .map_err(ArenaError::ContractError)?
-                .watch()
-                .await
-                .map_err(|e| ArenaError::PendingTransactionError(e))?;
-
-            currency_1
-                .approve(*lp_manager.address(), U256::MAX)
-                .nonce(
-                    strategy_provider
-                        .get_transaction_count(strategy_provider.default_signer_address())
-                        .await
-                        .unwrap(),
-                )
-                .send()
-                .await
-                .map_err(ArenaError::ContractError)?
-                .watch()
-                .await
-                .map_err(|e| ArenaError::PendingTransactionError(e))?;
+            let signal = Signal::new(
+                self.feed.current_value(),
+                None,
+                Signed::try_from(0).unwrap(),
+                Uint::from(0),
+            );
 
             strategy
                 .init(
-                    self.providers[&(idx + 1)].clone(),
-                    signal.clone(),
+                    strategy_provider.clone(),
+                    signal,
                     &mut self.inspector,
                     engine.clone(),
                 )
                 .await;
         }
 
+        let signal = Signal::new(
+            self.feed.current_value(),
+            None,
+            Signed::try_from(0).unwrap(),
+            Uint::from(0),
+        );
+
         self.arbitrageur.init(&signal, admin_provider.clone()).await;
 
         for step in 0..config.steps {
-            let id = fetcher
-                .toId(self.pool.clone().into())
-                .call()
-                .await
-                .map_err(ArenaError::ContractError)?;
-
-            let slot = fetcher
-                .getSlot0(*pool_manager.address(), id.poolId)
-                .call()
-                .await
-                .map_err(ArenaError::ContractError)?;
-
-            let signal = Signal::new(
-                *pool_manager.address(),
-                *fetcher.address(),
-                self.pool.clone(),
-                self.feed.current_value(),
-                Some(step),
-                slot.tick,
-                slot.sqrtPriceX96,
-            );
-
-            liquid_exchange
-                .setPrice(
-                    alloy::primitives::utils::parse_ether(&self.feed.step().to_string())
-                        .map_err(ArenaError::ConversionError)?,
-                )
-                .nonce(
-                    admin_provider
-                        .get_transaction_count(admin_provider.default_signer_address())
-                        .await
-                        .unwrap(),
-                )
-                .send()
-                .await
-                .map_err(ArenaError::ContractError)?
-                .watch()
-                .await
-                .map_err(|e| ArenaError::PendingTransactionError(e))?;
-
-            self.arbitrageur
-                .arbitrage(&signal, admin_provider.clone())
-                .await;
-
             for (idx, strategy) in self.strategies.iter_mut().enumerate() {
+                let signal = Signal::new(
+                    self.feed.current_value(),
+                    Some(step),
+                    Signed::try_from(0).unwrap(),
+                    Uint::from(0),
+                );
+
                 strategy
                     .process(
                         self.providers[&(idx + 1)].clone(),
-                        signal.clone(),
+                        signal,
                         &mut self.inspector,
                         engine.clone(),
                     )
@@ -277,6 +108,15 @@ impl<V> Arena<V> {
 
             self.feed.step();
         }
+
+        // controller
+        //     .addLiquidity(1000)
+        //     .send()
+        //     .await
+        //     .map_err(ArenaError::ContractError)?
+        //     .watch()
+        //     .await
+        //     .map_err(|e| ArenaError::PendingTransactionError(e))?;
 
         Ok(())
     }
@@ -289,9 +129,6 @@ pub struct ArenaBuilder<V> {
 
     /// [`Arena::strategies`]
     pub strategies: Vec<Box<dyn Strategy<V>>>,
-
-    /// [`Arena::pool`]
-    pub pool: PoolKey,
 
     /// [`Arena::feed`]
     pub feed: Option<Box<dyn Feed>>,
@@ -315,7 +152,6 @@ impl<V> ArenaBuilder<V> {
         ArenaBuilder {
             env: Anvil::default().spawn(),
             strategies: Vec::new(),
-            pool: PoolKey::default(),
             feed: None,
             inspector: None,
             arbitrageur: None,
@@ -325,25 +161,6 @@ impl<V> ArenaBuilder<V> {
     /// Add a strategy to the simulation.
     pub fn with_strategy(mut self, strategy: Box<dyn Strategy<V>>) -> Self {
         self.strategies.push(strategy);
-        self
-    }
-
-    /// Set the pool fee.
-    pub fn with_fee(mut self, fee: Uint<24, 1>) -> Self {
-        let fee: Uint<24, 1> = fee;
-        self.pool.fee = fee;
-        self
-    }
-
-    /// Set the pool tick spacing.
-    pub fn with_tick_spacing(mut self, tick_spacing: Signed<24, 1>) -> Self {
-        self.pool.tickSpacing = tick_spacing;
-        self
-    }
-
-    /// Set the pool hooks.
-    pub fn with_hooks(mut self, hooks: Address) -> Self {
-        self.pool.hooks = hooks;
         self
     }
 
@@ -386,7 +203,6 @@ impl<V> ArenaBuilder<V> {
         Arena {
             env: self.env,
             strategies: self.strategies,
-            pool: self.pool,
             feed: self.feed.unwrap(),
             inspector: self.inspector.unwrap(),
             arbitrageur: self.arbitrageur.unwrap(),

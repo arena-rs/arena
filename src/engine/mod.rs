@@ -1,17 +1,12 @@
 use alloy::{
-    primitives::{Address, Signed, Uint, U256},
+    primitives::{Address, Signed, Uint, I256},
     providers::{Provider, WalletProvider},
 };
 
 use super::*;
 use crate::{
     error::ArenaError,
-    types::{
-        fetcher::Fetcher,
-        modify_liquidity::{IPoolManager::ModifyLiquidityParams, PoolModifyLiquidityTest},
-        pool_manager::{PoolManager, PoolManager::PoolKey},
-        ArenaToken,
-    },
+    types::{controller::ArenaController, pool_manager::PoolManager::PoolKey},
 };
 /// Defines a trait for custom arbitrage strategies.
 pub mod arbitrageur;
@@ -53,31 +48,32 @@ impl PoolParameters {
     }
 }
 
+/// Abstraction to allow strategies to call state changing functions on the PoolManager without having to worry about callbacks.
 #[derive(Debug, Clone)]
 pub struct Engine {
-    pub pool: PoolParameters,
-    pub(crate) liquidity_manager: Address,
+    pub(crate) controller: Address,
 }
 
+#[allow(clippy::redundant_closure)]
 impl Engine {
+    /// Modify pool liquidity.
     pub async fn modify_liquidity(
         &self,
-        key: PoolKey,
-        params: ModifyLiquidityParams,
-        hook_data: Bytes,
+        liquidity_delta: I256,
+        tick_lower: Signed<24, 1>,
+        tick_upper: Signed<24, 1>,
         provider: AnvilProvider,
     ) -> Result<(), ArenaError> {
-        let lp_manager = PoolModifyLiquidityTest::new(self.liquidity_manager, provider.clone());
+        let controller = ArenaController::new(self.controller, provider.clone());
 
-        lp_manager
-            .modifyLiquidity_0(key.into(), params, hook_data, true, false)
+        controller
+            .addLiquidity(liquidity_delta, tick_lower, tick_upper)
             .nonce(
                 provider
                     .get_transaction_count(provider.default_signer_address())
                     .await
                     .unwrap(),
             )
-            .value(U256::from(0))
             .send()
             .await
             .map_err(ArenaError::ContractError)?

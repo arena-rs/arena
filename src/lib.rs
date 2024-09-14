@@ -28,13 +28,12 @@ use alloy::{
     },
     transports::http::{Client, Http},
 };
-use types::pool_manager::PoolManager::PoolKey;
 
 pub use crate::{
     arena::{Arena, ArenaBuilder},
     config::Config,
     engine::{
-        arbitrageur::{Arbitrageur, DefaultArbitrageur, EmptyArbitrageur},
+        arbitrageur::{Arbitrageur, EmptyArbitrageur},
         inspector::{EmptyInspector, Inspector, LogMessage, Logger},
         Engine, PoolParameters,
     },
@@ -118,6 +117,16 @@ mod types {
         }
     }
 
+    pub mod controller {
+        use alloy_sol_macro::sol;
+        sol! {
+            #[sol(rpc)]
+            #[derive(Debug)]
+            ArenaController,
+            "src/artifacts/ArenaController.json"
+        }
+    }
+
     impl From<FetcherPoolKey> for ManagerPoolKey {
         fn from(fetcher: FetcherPoolKey) -> Self {
             ManagerPoolKey {
@@ -194,15 +203,6 @@ mod types {
 /// A signal that is passed to a [`Strategy`] to provide information about the current state of the pool.
 #[derive(Debug, Clone, Default)]
 pub struct Signal {
-    /// Address of the pool manager.
-    pub manager: Address,
-
-    /// Address of the fetcher.
-    pub fetcher: Address,
-
-    /// Key of the pool.
-    pub pool: PoolKey,
-
     /// Current theoretical value of the pool.
     pub current_value: f64,
 
@@ -219,18 +219,12 @@ pub struct Signal {
 impl Signal {
     /// Public constructor function for a new [`Signal`].
     pub fn new(
-        manager: Address,
-        fetcher: Address,
-        pool: PoolKey,
         current_value: f64,
         step: Option<usize>,
         tick: Signed<24, 1>,
         sqrt_price_x96: Uint<160, 3>,
     ) -> Self {
         Self {
-            manager,
-            fetcher,
-            pool,
             current_value,
             step,
             tick,
@@ -241,20 +235,16 @@ impl Signal {
 
 #[cfg(test)]
 mod tests {
-    use alloy::primitives::{FixedBytes, Signed, Uint};
+    use alloy::primitives::{Signed, Uint, I256};
     use async_trait::async_trait;
 
     use super::*;
     use crate::{
         arena::{Arena, ArenaBuilder},
         config::Config,
-        engine::{
-            arbitrageur::{Arbitrageur, DefaultArbitrageur, EmptyArbitrageur},
-            inspector::{EmptyInspector, LogMessage, Logger},
-        },
+        engine::{arbitrageur::EmptyArbitrageur, inspector::EmptyInspector},
         feed::OrnsteinUhlenbeck,
         strategy::Strategy,
-        types::modify_liquidity::IPoolManager::ModifyLiquidityParams,
     };
 
     struct StrategyMock;
@@ -264,21 +254,17 @@ mod tests {
         async fn init(
             &self,
             provider: AnvilProvider,
-            signal: Signal,
+            _signal: Signal,
             _inspector: &mut Box<dyn Inspector<T>>,
             engine: Engine,
         ) {
-            let params = ModifyLiquidityParams {
-                tickLower: Signed::try_from(-20).unwrap(),
-                tickUpper: Signed::try_from(20).unwrap(),
-                liquidityDelta: Signed::try_from(1000000_u128).unwrap(),
-                salt: FixedBytes::ZERO,
-            };
-
-            println!("{:#?}", params);
-
             engine
-                .modify_liquidity(signal.pool, params, Bytes::new(), provider.clone())
+                .modify_liquidity(
+                    I256::try_from(10000).unwrap(),
+                    Signed::try_from(-2).unwrap(),
+                    Signed::try_from(2).unwrap(),
+                    provider,
+                )
                 .await
                 .unwrap();
         }
@@ -298,13 +284,11 @@ mod tests {
 
         let mut arena: Arena<_> = builder
             .with_strategy(Box::new(StrategyMock {}))
-            .with_fee(Uint::from(4000))
-            .with_tick_spacing(Signed::try_from(2).unwrap())
             .with_feed(Box::new(OrnsteinUhlenbeck::new(0.1, 0.1, 0.1, 0.1, 0.1)))
             .with_inspector(Box::new(EmptyInspector {}))
             .with_arbitrageur(Box::new(EmptyArbitrageur {}))
             .build();
 
-        arena.run(Config::new(5)).await.unwrap();
+        arena.run(Config::new(Uint::from(5000), 5)).await.unwrap();
     }
 }

@@ -16,11 +16,11 @@ contract Test {
         ArenaToken currency0 = new ArenaToken("currency0", "c0", 18);
         ArenaToken currency1 = new ArenaToken("currency1", "c1", 18);
 
-        currency0.mint(address(this), 100000000000000);
-        currency1.mint(address(this), 100000000000000);
+        currency0.mint(address(this), type(uint256).max);
+        currency1.mint(address(this), type(uint256).max);
 
-        currency0.approve(address(router), 100000000000000);
-        currency1.approve(address(router), 100000000000000);
+        currency0.approve(address(router), type(uint256).max);
+        currency1.approve(address(router), type(uint256).max);
 
         if (currency0 > currency1) {
             (currency0, currency1) = (currency1, currency0);
@@ -35,12 +35,12 @@ contract Test {
         });
 
         // Represents a 1:1 ratio of assets in the pool.
-        poolManager.initialize(poolKey, 79228162514264337593543950336, "");
+        poolManager.initialize(poolKey, 7922816251426433543950336, "");
 
         IPoolManager.ModifyLiquidityParams memory params = IPoolManager.ModifyLiquidityParams ({
             tickLower: -20,
             tickUpper: 20,
-            liquidityDelta: 1000,
+            liquidityDelta: 10000000000,
             salt: ""
         });
 
