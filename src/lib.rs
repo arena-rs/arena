@@ -28,7 +28,7 @@ use alloy::{
     },
     transports::http::{Client, Http},
 };
-
+use crate::types::controller::ArenaController::PoolKey;
 pub use crate::{
     arena::{Arena, ArenaBuilder},
     config::Config,
@@ -60,6 +60,7 @@ mod types {
         fetcher::Fetcher::PoolKey as FetcherPoolKey,
         modify_liquidity::PoolModifyLiquidityTest::PoolKey as ModifyLiquidityPoolKey,
         pool_manager::PoolManager::PoolKey as ManagerPoolKey,
+        controller::ArenaController::PoolKey as ControllerPoolKey,
         swap::PoolSwapTest::PoolKey as SwapPoolKey,
     };
 
@@ -151,6 +152,30 @@ mod types {
         }
     }
 
+    impl From<FetcherPoolKey> for ControllerPoolKey {
+        fn from(fetcher: FetcherPoolKey) -> Self {
+            ControllerPoolKey {
+                currency0: fetcher.currency0,
+                currency1: fetcher.currency1,
+                fee: fetcher.fee,
+                tickSpacing: fetcher.tickSpacing,
+                hooks: fetcher.hooks,
+            }
+        }
+    }
+
+    impl From<ControllerPoolKey> for FetcherPoolKey {
+        fn from(manager: ControllerPoolKey) -> Self {
+            FetcherPoolKey {
+                currency0: manager.currency0,
+                currency1: manager.currency1,
+                fee: manager.fee,
+                tickSpacing: manager.tickSpacing,
+                hooks: manager.hooks,
+            }
+        }
+    }
+
     impl From<SwapPoolKey> for ManagerPoolKey {
         fn from(swap: SwapPoolKey) -> Self {
             ManagerPoolKey {
@@ -165,6 +190,30 @@ mod types {
 
     impl From<ManagerPoolKey> for SwapPoolKey {
         fn from(manager: ManagerPoolKey) -> Self {
+            SwapPoolKey {
+                currency0: manager.currency0,
+                currency1: manager.currency1,
+                fee: manager.fee,
+                tickSpacing: manager.tickSpacing,
+                hooks: manager.hooks,
+            }
+        }
+    }
+
+    impl From<SwapPoolKey> for ControllerPoolKey {
+        fn from(swap: SwapPoolKey) -> Self {
+            ControllerPoolKey {
+                currency0: swap.currency0,
+                currency1: swap.currency1,
+                fee: swap.fee,
+                tickSpacing: swap.tickSpacing,
+                hooks: swap.hooks,
+            }
+        }
+    }
+
+    impl From<ControllerPoolKey> for SwapPoolKey {
+        fn from(manager: ControllerPoolKey) -> Self {
             SwapPoolKey {
                 currency0: manager.currency0,
                 currency1: manager.currency1,
@@ -201,7 +250,7 @@ mod types {
 }
 
 /// A signal that is passed to a [`Strategy`] to provide information about the current state of the pool.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct Signal {
     /// Current theoretical value of the pool.
     pub lex_price: Uint<256, 4>,
@@ -214,6 +263,18 @@ pub struct Signal {
 
     /// Current price of the pool.
     pub sqrt_price_x96: Uint<160, 3>,
+
+    /// Pool manager.
+    pub manager: Address,
+
+    /// Pool key.
+    pub pool: PoolKey,
+
+    /// Fetcher.
+    pub fetcher: Address,
+
+    /// Current value of the price feed.
+    pub current_value: f64,
 }
 
 impl Signal {
@@ -223,12 +284,20 @@ impl Signal {
         step: Option<usize>,
         tick: Signed<24, 1>,
         sqrt_price_x96: Uint<160, 3>,
+        manager: Address,
+        pool: PoolKey,
+        fetcher: Address,
+        current_value: f64,
     ) -> Self {
         Self {
             lex_price,
             step,
             tick,
             sqrt_price_x96,
+            manager,
+            pool,
+            fetcher,
+            current_value,
         }
     }
 }
@@ -242,7 +311,7 @@ mod tests {
     use crate::{
         arena::{Arena, ArenaBuilder},
         config::Config,
-        engine::{arbitrageur::EmptyArbitrageur, inspector::EmptyInspector},
+        engine::{arbitrageur::{EmptyArbitrageur, DefaultArbitrageur}, inspector::EmptyInspector},
         feed::OrnsteinUhlenbeck,
         strategy::Strategy,
     };
@@ -271,10 +340,11 @@ mod tests {
         async fn process(
             &self,
             _provider: AnvilProvider,
-            _signal: Signal,
+            signal: Signal,
             _inspector: &mut Box<dyn Inspector<T>>,
             _engine: Engine,
         ) {
+            println!("signal: {:?}", signal.current_value);
         }
     }
 
@@ -284,11 +354,11 @@ mod tests {
 
         let mut arena: Arena<_> = builder
             .with_strategy(Box::new(StrategyMock {}))
-            .with_feed(Box::new(OrnsteinUhlenbeck::new(0.1, 0.1, 0.1, 0.1, 0.1)))
+            .with_feed(Box::new(OrnsteinUhlenbeck::new(1.0, 0.1, 0.1, 0.1, 0.1)))
             .with_inspector(Box::new(EmptyInspector {}))
             .with_arbitrageur(Box::new(EmptyArbitrageur {}))
             .build();
 
-        arena.run(Config::new(Uint::from(5000), 5)).await.unwrap();
+        arena.run(Config::new(Uint::from(5000), 500)).await.unwrap();
     }
 }

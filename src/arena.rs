@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 
 use alloy::{primitives::Uint, providers::ProviderBuilder, signers::local::PrivateKeySigner};
-
+use alloy::providers::WalletProvider;
+use alloy::providers::Provider;
 use super::*;
 use crate::{
     config::Config,
@@ -69,6 +70,10 @@ impl<V> Arena<V> {
                 None,
                 signal.currentTick,
                 signal.sqrtPriceX96,
+                signal.manager,
+                signal.pool,
+                signal.fetcher,
+                self.feed.current_value(),
             );
 
             strategy
@@ -88,23 +93,37 @@ impl<V> Arena<V> {
             None,
             signal.currentTick,
             signal.sqrtPriceX96,
+            signal.manager,
+            signal.pool,
+            signal.fetcher,
+            self.feed.current_value(),
         );
-
-        controller
-            .setPrice(
-                alloy::primitives::utils::parse_ether(&self.feed.step().to_string())
-                    .map_err(ArenaError::ConversionError)?,
-            )
-            .send()
-            .await
-            .map_err(ArenaError::ContractError)?
-            .watch()
-            .await
-            .map_err(|e| ArenaError::PendingTransactionError(e))?;
 
         self.arbitrageur.init(&signal, admin_provider.clone()).await;
 
         for step in 0..config.steps {
+            controller
+                .setPrice(
+                    alloy::primitives::utils::parse_ether(&self.feed.step().to_string())
+                        .map_err(ArenaError::ConversionError)?,
+                )
+                .nonce(
+                    admin_provider
+                        .get_transaction_count(admin_provider.default_signer_address())
+                        .await
+                        .unwrap(),
+                )
+                .send()
+                .await
+                .map_err(ArenaError::ContractError)?
+                .watch()
+                .await
+                .map_err(|e| ArenaError::PendingTransactionError(e))?;
+
+            self.arbitrageur
+                .arbitrage(&signal, admin_provider.clone())
+                .await;
+
             for (idx, strategy) in self.strategies.iter_mut().enumerate() {
                 let signal = controller.constructSignal().call().await?._0;
 
@@ -113,6 +132,10 @@ impl<V> Arena<V> {
                     Some(step),
                     signal.currentTick,
                     signal.sqrtPriceX96,
+                    signal.manager,
+                    signal.pool,
+                    signal.fetcher,
+                    self.feed.current_value(),
                 );
 
                 strategy

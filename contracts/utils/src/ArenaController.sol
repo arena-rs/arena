@@ -26,6 +26,8 @@ contract ArenaController {
         uint160 sqrtPriceX96;
         address manager;
         uint256 lexPrice;
+        PoolKey pool;
+        address fetcher;
     }
 
     constructor(uint256 fee, uint256 initialPrice) {
@@ -53,7 +55,9 @@ contract ArenaController {
             currentTick: tick,
             sqrtPriceX96: sqrtPriceX96,
             manager: address(poolManager),
-            lexPrice: lex.price()
+            lexPrice: lex.price(),
+            pool: poolKey,
+            fetcher: address(fetcher)
         });
     }
 
