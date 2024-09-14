@@ -26,7 +26,7 @@ contract Test {
             (currency0, currency1) = (currency1, currency0);
         }
 
-        PoolKey memory poolKey = PoolKey ({
+        PoolKey memory poolKey = PoolKey({
             currency0: Currency.wrap(address(currency0)),
             currency1: Currency.wrap(address(currency1)),
             fee: 4000,
@@ -37,12 +37,8 @@ contract Test {
         // Represents a 1:1 ratio of assets in the pool.
         poolManager.initialize(poolKey, 7922816251426433543950336, "");
 
-        IPoolManager.ModifyLiquidityParams memory params = IPoolManager.ModifyLiquidityParams ({
-            tickLower: -20,
-            tickUpper: 20,
-            liquidityDelta: 10000000000,
-            salt: ""
-        });
+        IPoolManager.ModifyLiquidityParams memory params =
+            IPoolManager.ModifyLiquidityParams({tickLower: -20, tickUpper: 20, liquidityDelta: 10000000000, salt: ""});
 
         router.modifyLiquidity(poolKey, params, "");
     }

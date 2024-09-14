@@ -204,7 +204,7 @@ mod types {
 #[derive(Debug, Clone, Default)]
 pub struct Signal {
     /// Current theoretical value of the pool.
-    pub current_value: f64,
+    pub lex_price: Uint<256, 4>,
 
     /// Current step of the simulation.
     pub step: Option<usize>,
@@ -219,13 +219,13 @@ pub struct Signal {
 impl Signal {
     /// Public constructor function for a new [`Signal`].
     pub fn new(
-        current_value: f64,
+        lex_price: Uint<256, 4>,
         step: Option<usize>,
         tick: Signed<24, 1>,
         sqrt_price_x96: Uint<160, 3>,
     ) -> Self {
         Self {
-            current_value,
+            lex_price,
             step,
             tick,
             sqrt_price_x96,

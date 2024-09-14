@@ -7,19 +7,31 @@ import {PoolKey} from "v4-core/types/PoolKey.sol";
 import {Currency} from "v4-core/types/Currency.sol";
 import {IHooks} from "v4-core/interfaces/IHooks.sol";
 import {IPoolManager} from "v4-core/interfaces/IPoolManager.sol";
+import {LiquidExchange} from "./LiquidExchange.sol";
+import {Fetcher} from "./Fetcher.sol";
 
 contract ArenaController {
     PoolManager immutable poolManager;
     PoolModifyLiquidityTest immutable router;
+    LiquidExchange immutable lex;
+    Fetcher immutable fetcher;
 
     ArenaToken immutable currency0;
     ArenaToken immutable currency1;
 
     PoolKey public poolKey;
 
-    constructor(uint256 fee) {
+    struct Signal {
+        int24 currentTick;
+        uint160 sqrtPriceX96;
+        address manager;
+        uint256 lexPrice;
+    }
+
+    constructor(uint256 fee, uint256 initialPrice) {
         poolManager = new PoolManager(fee);
         router = new PoolModifyLiquidityTest(poolManager);
+        fetcher = new Fetcher();
 
         currency0 = new ArenaToken("currency0", "c0", 18);
         currency1 = new ArenaToken("currency1", "c1", 18);
@@ -27,10 +39,36 @@ contract ArenaController {
         if (currency0 > currency1) {
             (currency0, currency1) = (currency1, currency0);
         }
+
+        lex = new LiquidExchange(address(currency0), address(currency1), initialPrice);
+
+        require(currency0.mint(address(this), type(uint256).max), "Minting currency0 to liquid exchange failed");
+        require(currency1.mint(address(this), type(uint256).max), "Minting currency1 to liquid exchange failed");
     }
 
-    function setPool(uint24 poolFee, int24 tickSpacing, IHooks hooks, uint160 sqrtPriceX96, bytes memory hookData) public {
-        poolKey = PoolKey ({
+    function constructSignal() public view returns (Signal memory) {
+        (uint160 sqrtPriceX96, int24 tick,,) = fetcher.getSlot0(poolManager, fetcher.toId(poolKey));
+
+        return Signal({
+            currentTick: tick,
+            sqrtPriceX96: sqrtPriceX96,
+            manager: address(poolManager),
+            lexPrice: lex.price()
+        });
+    }
+
+    function setPrice(uint256 price) public {
+        lex.setPrice(price);
+    }
+
+    function swapOnLex(address tokenIn, uint256 amountIn) public {
+        lex.swap(tokenIn, amountIn);
+    }
+
+    function setPool(uint24 poolFee, int24 tickSpacing, IHooks hooks, uint160 sqrtPriceX96, bytes memory hookData)
+        public
+    {
+        poolKey = PoolKey({
             currency0: Currency.wrap(address(currency0)),
             currency1: Currency.wrap(address(currency1)),
             fee: poolFee,

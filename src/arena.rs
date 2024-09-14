@@ -37,7 +37,8 @@ impl<V> Arena<V> {
     pub async fn run(&mut self, config: Config) -> Result<(), ArenaError> {
         let admin_provider = self.providers[&0].clone();
 
-        let controller = ArenaController::deploy(admin_provider.clone(), config.fee).await?;
+        let controller =
+            ArenaController::deploy(admin_provider.clone(), config.fee, Uint::from(1)).await?;
 
         controller
             .setPool(
@@ -61,11 +62,13 @@ impl<V> Arena<V> {
         for (idx, strategy) in self.strategies.iter_mut().enumerate() {
             let strategy_provider = self.providers[&(idx + 1)].clone();
 
+            let signal = controller.constructSignal().call().await?._0;
+
             let signal = Signal::new(
-                self.feed.current_value(),
+                signal.lexPrice,
                 None,
-                Signed::try_from(0).unwrap(),
-                Uint::from(0),
+                signal.currentTick,
+                signal.sqrtPriceX96,
             );
 
             strategy
@@ -78,22 +81,26 @@ impl<V> Arena<V> {
                 .await;
         }
 
+        let signal = controller.constructSignal().call().await?._0;
+
         let signal = Signal::new(
-            self.feed.current_value(),
+            signal.lexPrice,
             None,
-            Signed::try_from(0).unwrap(),
-            Uint::from(0),
+            signal.currentTick,
+            signal.sqrtPriceX96,
         );
 
         self.arbitrageur.init(&signal, admin_provider.clone()).await;
 
         for step in 0..config.steps {
             for (idx, strategy) in self.strategies.iter_mut().enumerate() {
+                let signal = controller.constructSignal().call().await?._0;
+
                 let signal = Signal::new(
-                    self.feed.current_value(),
+                    signal.lexPrice,
                     Some(step),
-                    Signed::try_from(0).unwrap(),
-                    Uint::from(0),
+                    signal.currentTick,
+                    signal.sqrtPriceX96,
                 );
 
                 strategy
