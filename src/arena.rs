@@ -90,6 +90,18 @@ impl<V> Arena<V> {
             signal.sqrtPriceX96,
         );
 
+        controller
+            .setPrice(
+                alloy::primitives::utils::parse_ether(&self.feed.step().to_string())
+                    .map_err(ArenaError::ConversionError)?,
+            )
+            .send()
+            .await
+            .map_err(ArenaError::ContractError)?
+            .watch()
+            .await
+            .map_err(|e| ArenaError::PendingTransactionError(e))?;
+
         self.arbitrageur.init(&signal, admin_provider.clone()).await;
 
         for step in 0..config.steps {

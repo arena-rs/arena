@@ -42,8 +42,8 @@ contract ArenaController {
 
         lex = new LiquidExchange(address(currency0), address(currency1), initialPrice);
 
-        require(currency0.mint(address(this), type(uint256).max), "Minting currency0 to liquid exchange failed");
-        require(currency1.mint(address(this), type(uint256).max), "Minting currency1 to liquid exchange failed");
+        require(currency0.mint(address(this), 100000000000000), "Minting currency0 to liquid exchange failed");
+        require(currency1.mint(address(this), 100000000000000), "Minting currency1 to liquid exchange failed");
     }
 
     function constructSignal() public view returns (Signal memory) {
