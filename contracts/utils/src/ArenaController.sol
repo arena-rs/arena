@@ -9,10 +9,15 @@ import {IHooks} from "v4-core/interfaces/IHooks.sol";
 import {IPoolManager} from "v4-core/interfaces/IPoolManager.sol";
 import {LiquidExchange} from "./LiquidExchange.sol";
 import {Fetcher} from "./Fetcher.sol";
+import {FullMath} from "v4-core/libraries/FullMath.sol";
+import {SqrtPriceMath} from "v4-core/libraries/SqrtPriceMath.sol";
+import {PoolSwapTest} from "v4-core/test/PoolSwapTest.sol";
+import {TickMath} from "v4-core/libraries/TickMath.sol";
 
 contract ArenaController {
     PoolManager immutable poolManager;
     PoolModifyLiquidityTest immutable router;
+    PoolSwapTest immutable swapRouter;
     LiquidExchange immutable lex;
     Fetcher immutable fetcher;
 
@@ -20,6 +25,11 @@ contract ArenaController {
     ArenaToken immutable currency1;
 
     PoolKey public poolKey;
+
+    uint256 internal constant MAX_SWAP_FEE = 1e6;
+
+    uint160 public constant MIN_PRICE_LIMIT = TickMath.MIN_SQRT_PRICE + 1;
+    uint160 public constant MAX_PRICE_LIMIT = TickMath.MAX_SQRT_PRICE - 1;
 
     struct Signal {
         int24 currentTick;
@@ -33,6 +43,7 @@ contract ArenaController {
     constructor(uint256 fee, uint256 initialPrice) {
         poolManager = new PoolManager(fee);
         router = new PoolModifyLiquidityTest(poolManager);
+        swapRouter = new PoolSwapTest(poolManager);
         fetcher = new Fetcher();
 
         currency0 = new ArenaToken("currency0", "c0", 18);
@@ -69,6 +80,44 @@ contract ArenaController {
         lex.swap(tokenIn, amountIn);
     }
 
+    function equalizePrice() public {
+        require(currency0.approve(address(swapRouter), type(uint256).max), "Approval for currency0 failed");
+        require(currency1.approve(address(swapRouter), type(uint256).max), "Approval for currency1 failed");
+
+        (uint160 sqrtPriceX96, int24 tick,,) = fetcher.getSlot0(poolManager, fetcher.toId(poolKey));
+        
+        uint256 uniswapPrice = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, 1 << 192) * 1e18;
+        uint256 lexPrice = lex.price();
+
+        if (uniswapPrice > lexPrice) {
+            bool zeroForOne = true;
+
+            IPoolManager.SwapParams memory params = IPoolManager.SwapParams({
+                zeroForOne: zeroForOne,
+                amountSpecified: 1000000,
+                sqrtPriceLimitX96: zeroForOne ? MIN_PRICE_LIMIT : MAX_PRICE_LIMIT // unlimited impact
+            });
+
+            PoolSwapTest.TestSettings memory testSettings =
+                PoolSwapTest.TestSettings({takeClaims: false, settleUsingBurn: false});
+
+            swapRouter.swap(poolKey, params, testSettings, "");
+        } else if (uniswapPrice < lexPrice) {
+            bool zeroForOne = false;
+
+            IPoolManager.SwapParams memory params = IPoolManager.SwapParams({
+                zeroForOne: zeroForOne,
+                amountSpecified: 10000,
+                sqrtPriceLimitX96: zeroForOne ? MIN_PRICE_LIMIT : MAX_PRICE_LIMIT // unlimited impact
+            });
+
+            PoolSwapTest.TestSettings memory testSettings =
+                PoolSwapTest.TestSettings({takeClaims: false, settleUsingBurn: false});
+
+            swapRouter.swap(poolKey, params, testSettings, "");
+        }
+    }
+
     function setPool(uint24 poolFee, int24 tickSpacing, IHooks hooks, uint160 sqrtPriceX96, bytes memory hookData)
         public
     {
@@ -100,5 +149,63 @@ contract ArenaController {
         });
 
         router.modifyLiquidity(poolKey, params, "");
+    }
+
+    function computeSwapStep(
+        uint160 sqrtPriceCurrentX96,
+        uint160 sqrtPriceTargetX96,
+        uint128 liquidity,
+        int256 amountRemaining,
+        uint24 feePips
+    ) external pure returns (uint160 sqrtPriceNextX96, uint256 amountIn, uint256 amountOut, uint256 feeAmount) {
+        unchecked {
+            uint256 _feePips = feePips; // upcast once and cache
+            bool zeroForOne = sqrtPriceCurrentX96 >= sqrtPriceTargetX96;
+            bool exactIn = amountRemaining < 0;
+
+            if (exactIn) {
+                uint256 amountRemainingLessFee =
+                    FullMath.mulDiv(uint256(-amountRemaining), MAX_SWAP_FEE - _feePips, MAX_SWAP_FEE);
+                amountIn = zeroForOne
+                    ? SqrtPriceMath.getAmount0Delta(sqrtPriceTargetX96, sqrtPriceCurrentX96, liquidity, true)
+                    : SqrtPriceMath.getAmount1Delta(sqrtPriceCurrentX96, sqrtPriceTargetX96, liquidity, true);
+                if (amountRemainingLessFee >= amountIn) {
+                    // `amountIn` is capped by the target price
+                    sqrtPriceNextX96 = sqrtPriceTargetX96;
+                    feeAmount = _feePips == MAX_SWAP_FEE
+                        ? amountIn // amountIn is always 0 here, as amountRemainingLessFee == 0 and amountRemainingLessFee >= amountIn
+                        : FullMath.mulDivRoundingUp(amountIn, _feePips, MAX_SWAP_FEE - _feePips);
+                } else {
+                    // exhaust the remaining amount
+                    amountIn = amountRemainingLessFee;
+                    sqrtPriceNextX96 = SqrtPriceMath.getNextSqrtPriceFromInput(
+                        sqrtPriceCurrentX96, liquidity, amountRemainingLessFee, zeroForOne
+                    );
+                    // we didn't reach the target, so take the remainder of the maximum input as fee
+                    feeAmount = uint256(-amountRemaining) - amountIn;
+                }
+                amountOut = zeroForOne
+                    ? SqrtPriceMath.getAmount1Delta(sqrtPriceNextX96, sqrtPriceCurrentX96, liquidity, false)
+                    : SqrtPriceMath.getAmount0Delta(sqrtPriceCurrentX96, sqrtPriceNextX96, liquidity, false);
+            } else {
+                amountOut = zeroForOne
+                    ? SqrtPriceMath.getAmount1Delta(sqrtPriceTargetX96, sqrtPriceCurrentX96, liquidity, false)
+                    : SqrtPriceMath.getAmount0Delta(sqrtPriceCurrentX96, sqrtPriceTargetX96, liquidity, false);
+                if (uint256(amountRemaining) >= amountOut) {
+                    // `amountOut` is capped by the target price
+                    sqrtPriceNextX96 = sqrtPriceTargetX96;
+                } else {
+                    // cap the output amount to not exceed the remaining output amount
+                    amountOut = uint256(amountRemaining);
+                    sqrtPriceNextX96 =
+                        SqrtPriceMath.getNextSqrtPriceFromOutput(sqrtPriceCurrentX96, liquidity, amountOut, zeroForOne);
+                }
+                amountIn = zeroForOne
+                    ? SqrtPriceMath.getAmount0Delta(sqrtPriceNextX96, sqrtPriceCurrentX96, liquidity, true)
+                    : SqrtPriceMath.getAmount1Delta(sqrtPriceCurrentX96, sqrtPriceNextX96, liquidity, true);
+                // `feePips` cannot be `MAX_SWAP_FEE` for exact out
+                feeAmount = FullMath.mulDivRoundingUp(amountIn, _feePips, MAX_SWAP_FEE - _feePips);
+            }
+        }
     }
 }

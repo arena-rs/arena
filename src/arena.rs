@@ -1,8 +1,11 @@
 use std::collections::HashMap;
 
-use alloy::{primitives::Uint, providers::ProviderBuilder, signers::local::PrivateKeySigner};
-use alloy::providers::WalletProvider;
-use alloy::providers::Provider;
+use alloy::{
+    primitives::Uint,
+    providers::{Provider, ProviderBuilder, WalletProvider},
+    signers::local::PrivateKeySigner,
+};
+
 use super::*;
 use crate::{
     config::Config,
@@ -46,7 +49,7 @@ impl<V> Arena<V> {
                 Uint::from(0),
                 Signed::try_from(2).unwrap(),
                 Address::default(),
-                Uint::from(79228162514264337593543950336_u128),
+                Uint::from(24028916059024274524587271040_u128),
                 Bytes::new(),
             )
             .send()
@@ -74,6 +77,7 @@ impl<V> Arena<V> {
                 signal.pool,
                 signal.fetcher,
                 self.feed.current_value(),
+                *controller.address(),
             );
 
             strategy
@@ -97,6 +101,7 @@ impl<V> Arena<V> {
             signal.pool,
             signal.fetcher,
             self.feed.current_value(),
+            *controller.address(),
         );
 
         self.arbitrageur.init(&signal, admin_provider.clone()).await;
@@ -136,6 +141,7 @@ impl<V> Arena<V> {
                     signal.pool,
                     signal.fetcher,
                     self.feed.current_value(),
+                    *controller.address(),
                 );
 
                 strategy

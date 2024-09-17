@@ -28,6 +28,7 @@ use alloy::{
     },
     transports::http::{Client, Http},
 };
+
 use crate::types::controller::ArenaController::PoolKey;
 pub use crate::{
     arena::{Arena, ArenaBuilder},
@@ -57,10 +58,10 @@ mod types {
     use alloy_sol_macro::sol;
 
     use crate::types::{
+        controller::ArenaController::PoolKey as ControllerPoolKey,
         fetcher::Fetcher::PoolKey as FetcherPoolKey,
         modify_liquidity::PoolModifyLiquidityTest::PoolKey as ModifyLiquidityPoolKey,
         pool_manager::PoolManager::PoolKey as ManagerPoolKey,
-        controller::ArenaController::PoolKey as ControllerPoolKey,
         swap::PoolSwapTest::PoolKey as SwapPoolKey,
     };
 
@@ -275,10 +276,14 @@ pub struct Signal {
 
     /// Current value of the price feed.
     pub current_value: f64,
+
+    /// The arena controller.
+    pub controller: Address,
 }
 
 impl Signal {
     /// Public constructor function for a new [`Signal`].
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         lex_price: Uint<256, 4>,
         step: Option<usize>,
@@ -288,6 +293,7 @@ impl Signal {
         pool: PoolKey,
         fetcher: Address,
         current_value: f64,
+        controller: Address,
     ) -> Self {
         Self {
             lex_price,
@@ -298,6 +304,7 @@ impl Signal {
             pool,
             fetcher,
             current_value,
+            controller,
         }
     }
 }
@@ -311,7 +318,10 @@ mod tests {
     use crate::{
         arena::{Arena, ArenaBuilder},
         config::Config,
-        engine::{arbitrageur::{EmptyArbitrageur, DefaultArbitrageur}, inspector::EmptyInspector},
+        engine::{
+            arbitrageur::{EmptyArbitrageur, FixedArbitrageur},
+            inspector::EmptyInspector,
+        },
         feed::OrnsteinUhlenbeck,
         strategy::Strategy,
     };
@@ -329,9 +339,9 @@ mod tests {
         ) {
             engine
                 .modify_liquidity(
-                    I256::try_from(10000).unwrap(),
-                    Signed::try_from(-2).unwrap(),
-                    Signed::try_from(2).unwrap(),
+                    I256::try_from(10000000).unwrap(),
+                    Signed::try_from(-1000).unwrap(),
+                    Signed::try_from(1000).unwrap(),
                     provider,
                 )
                 .await
@@ -344,7 +354,7 @@ mod tests {
             _inspector: &mut Box<dyn Inspector<T>>,
             _engine: Engine,
         ) {
-            println!("signal: {:?}", signal.current_value);
+            println!("signal: {:?}", signal);
         }
     }
 
@@ -354,11 +364,11 @@ mod tests {
 
         let mut arena: Arena<_> = builder
             .with_strategy(Box::new(StrategyMock {}))
-            .with_feed(Box::new(OrnsteinUhlenbeck::new(1.0, 0.1, 0.1, 0.1, 0.1)))
+            .with_feed(Box::new(OrnsteinUhlenbeck::new(10.0, 0.1, 0.1, 0.1, 0.1)))
             .with_inspector(Box::new(EmptyInspector {}))
-            .with_arbitrageur(Box::new(EmptyArbitrageur {}))
+            .with_arbitrageur(Box::new(FixedArbitrageur::default()))
             .build();
 
-        arena.run(Config::new(Uint::from(5000), 500)).await.unwrap();
+        arena.run(Config::new(Uint::from(5000), 10)).await.unwrap();
     }
 }
