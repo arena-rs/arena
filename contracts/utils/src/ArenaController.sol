@@ -13,6 +13,9 @@ import {FullMath} from "v4-core/libraries/FullMath.sol";
 import {SqrtPriceMath} from "v4-core/libraries/SqrtPriceMath.sol";
 import {PoolSwapTest} from "v4-core/test/PoolSwapTest.sol";
 import {TickMath} from "v4-core/libraries/TickMath.sol";
+import {PoolId} from "v4-core/types/PoolId.sol";
+import {IPoolManager} from "v4-core/interfaces/IPoolManager.sol";
+import {Position} from "v4-core/libraries/Position.sol";
 
 contract ArenaController {
     PoolManager immutable poolManager;
@@ -30,6 +33,9 @@ contract ArenaController {
 
     uint160 public constant MIN_PRICE_LIMIT = TickMath.MIN_SQRT_PRICE + 1;
     uint160 public constant MAX_PRICE_LIMIT = TickMath.MAX_SQRT_PRICE - 1;
+
+    bytes32 public constant POOLS_SLOT = bytes32(uint256(6));
+    uint256 public constant POSITIONS_OFFSET = 6;
 
     struct Signal {
         int24 currentTick;
@@ -57,6 +63,10 @@ contract ArenaController {
 
         require(currency0.mint(address(this), 100000000000000), "Minting currency0 to liquid exchange failed");
         require(currency1.mint(address(this), 100000000000000), "Minting currency1 to liquid exchange failed");
+    }
+
+    function getRouter() external view returns (address) {
+        return address(router);
     }
 
     function constructSignal() public view returns (Signal memory) {
@@ -149,6 +159,51 @@ contract ArenaController {
         });
 
         router.modifyLiquidity(poolKey, params, "");
+    }
+
+    function getPositionInfo(
+        address owner,
+        int24 tickLower,
+        int24 tickUpper,
+        bytes32 salt
+    ) external view returns (uint128 liquidity, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128) {
+        PoolId poolId = fetcher.toId(poolKey);
+        // positionKey = keccak256(abi.encodePacked(owner, tickLower, tickUpper, salt))
+        bytes32 positionKey = Position.calculatePositionKey(owner, tickLower, tickUpper, salt);
+
+        (liquidity, feeGrowthInside0LastX128, feeGrowthInside1LastX128) = getPositionInfo(poolManager, poolId, positionKey);
+    }
+
+    function getPositionInfo(IPoolManager manager, PoolId poolId, bytes32 positionId)
+        internal
+        view
+        returns (uint128 liquidity, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128)
+    {
+        bytes32 slot = _getPositionInfoSlot(poolId, positionId);
+
+        // read all 3 words of the Position.State struct
+        bytes32[] memory data = manager.extsload(slot, 3);
+
+        assembly ("memory-safe") {
+            liquidity := mload(add(data, 32))
+            feeGrowthInside0LastX128 := mload(add(data, 64))
+            feeGrowthInside1LastX128 := mload(add(data, 96))
+        }
+    }
+
+    function _getPositionInfoSlot(PoolId poolId, bytes32 positionId) internal pure returns (bytes32) {
+        // slot key of Pool.State value: `pools[poolId]`
+        bytes32 stateSlot = _getPoolStateSlot(poolId);
+
+        // Pool.State: `mapping(bytes32 => Position.State) positions;`
+        bytes32 positionMapping = bytes32(uint256(stateSlot) + POSITIONS_OFFSET);
+
+        // slot of the mapping key: `pools[poolId].positions[positionId]
+        return keccak256(abi.encodePacked(positionId, positionMapping));
+    }
+
+    function _getPoolStateSlot(PoolId poolId) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(PoolId.unwrap(poolId), POOLS_SLOT));
     }
 
     function computeSwapStep(

@@ -325,6 +325,9 @@ mod tests {
         feed::OrnsteinUhlenbeck,
         strategy::Strategy,
     };
+    use alloy::providers::WalletProvider;
+    use crate::types::controller::ArenaController;
+    use alloy::primitives::FixedBytes;
 
     struct StrategyMock;
 
@@ -349,12 +352,25 @@ mod tests {
         }
         async fn process(
             &self,
-            _provider: AnvilProvider,
+            provider: AnvilProvider,
             signal: Signal,
             _inspector: &mut Box<dyn Inspector<T>>,
             _engine: Engine,
         ) {
-            println!("signal: {:?}", signal);
+            let controller = ArenaController::new(signal.controller, provider.clone());
+
+            let position_info = controller
+                .getPositionInfo(
+                    controller.getRouter().call().await.unwrap()._0,
+                    Signed::try_from(-1000).unwrap(),
+                    Signed::try_from(1000).unwrap(),
+                    FixedBytes::ZERO,
+                )
+                .call()
+                .await
+                .unwrap();
+
+            println!("position_info: {:?}", position_info);
         }
     }
 

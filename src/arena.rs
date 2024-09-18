@@ -46,7 +46,7 @@ impl<V> Arena<V> {
 
         controller
             .setPool(
-                Uint::from(0),
+                Uint::from(10000),
                 Signed::try_from(2).unwrap(),
                 Address::default(),
                 Uint::from(24028916059024274524587271040_u128),
