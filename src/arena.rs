@@ -15,6 +15,7 @@ use crate::{
     strategy::Strategy,
     types::controller::ArenaController,
 };
+
 /// Represents an [`Arena`] that can be used to run a simulation and execute strategies.
 pub struct Arena<V> {
     /// The underlying Anvil execution environment.
@@ -46,10 +47,10 @@ impl<V> Arena<V> {
 
         controller
             .setPool(
-                Uint::from(10000),
+                Uint::from(0),
                 Signed::try_from(2).unwrap(),
                 Address::default(),
-                Uint::from(24028916059024274524587271040_u128),
+                Uint::from(79228162514264337593543950336_u128),
                 Bytes::new(),
             )
             .send()
@@ -124,6 +125,20 @@ impl<V> Arena<V> {
                 .watch()
                 .await
                 .map_err(|e| ArenaError::PendingTransactionError(e))?;
+
+            let signal = controller.constructSignal().call().await?._0;
+
+            let signal = Signal::new(
+                signal.lexPrice,
+                None,
+                signal.currentTick,
+                signal.sqrtPriceX96,
+                signal.manager,
+                signal.pool,
+                signal.fetcher,
+                self.feed.current_value(),
+                *controller.address(),
+            );
 
             self.arbitrageur
                 .arbitrage(&signal, admin_provider.clone())

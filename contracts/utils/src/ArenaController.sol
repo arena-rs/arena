@@ -61,8 +61,8 @@ contract ArenaController {
 
         lex = new LiquidExchange(address(currency0), address(currency1), initialPrice);
 
-        require(currency0.mint(address(this), 100000000000000), "Minting currency0 to liquid exchange failed");
-        require(currency1.mint(address(this), 100000000000000), "Minting currency1 to liquid exchange failed");
+        require(currency0.mint(address(this), 10000000000000000000), "Minting currency0 to liquid exchange failed");
+        require(currency1.mint(address(this), 10000000000000000000), "Minting currency1 to liquid exchange failed");
     }
 
     function getRouter() external view returns (address) {
@@ -90,13 +90,13 @@ contract ArenaController {
         lex.swap(tokenIn, amountIn);
     }
 
-    function equalizePrice() public {
+    function equalizePrice(int256 depth) public {
         require(currency0.approve(address(swapRouter), type(uint256).max), "Approval for currency0 failed");
         require(currency1.approve(address(swapRouter), type(uint256).max), "Approval for currency1 failed");
 
         (uint160 sqrtPriceX96, int24 tick,,) = fetcher.getSlot0(poolManager, fetcher.toId(poolKey));
         
-        uint256 uniswapPrice = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, 1 << 192) * 1e18;
+        uint256 uniswapPrice = FullMath.mulDiv(uint256(sqrtPriceX96) * 10**18, uint256(sqrtPriceX96), 1 << 192);
         uint256 lexPrice = lex.price();
 
         if (uniswapPrice > lexPrice) {
@@ -104,7 +104,7 @@ contract ArenaController {
 
             IPoolManager.SwapParams memory params = IPoolManager.SwapParams({
                 zeroForOne: zeroForOne,
-                amountSpecified: 1000000,
+                amountSpecified: depth,
                 sqrtPriceLimitX96: zeroForOne ? MIN_PRICE_LIMIT : MAX_PRICE_LIMIT // unlimited impact
             });
 
@@ -112,12 +112,13 @@ contract ArenaController {
                 PoolSwapTest.TestSettings({takeClaims: false, settleUsingBurn: false});
 
             swapRouter.swap(poolKey, params, testSettings, "");
+
         } else if (uniswapPrice < lexPrice) {
             bool zeroForOne = false;
 
             IPoolManager.SwapParams memory params = IPoolManager.SwapParams({
                 zeroForOne: zeroForOne,
-                amountSpecified: 10000,
+                amountSpecified: depth,
                 sqrtPriceLimitX96: zeroForOne ? MIN_PRICE_LIMIT : MAX_PRICE_LIMIT // unlimited impact
             });
 
@@ -161,7 +162,7 @@ contract ArenaController {
         router.modifyLiquidity(poolKey, params, "");
     }
 
-    function getPositionInfo(
+    /*function getPositionInfo(
         address owner,
         int24 tickLower,
         int24 tickUpper,
@@ -204,7 +205,7 @@ contract ArenaController {
 
     function _getPoolStateSlot(PoolId poolId) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(PoolId.unwrap(poolId), POOLS_SLOT));
-    }
+    }*/
 
     function computeSwapStep(
         uint160 sqrtPriceCurrentX96,

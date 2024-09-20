@@ -311,8 +311,12 @@ impl Signal {
 
 #[cfg(test)]
 mod tests {
-    use alloy::primitives::{Signed, Uint, I256};
+    use alloy::{
+        primitives::{FixedBytes, Signed, Uint, I256},
+        providers::WalletProvider,
+    };
     use async_trait::async_trait;
+    use rug::{ops::Pow, Float};
 
     use super::*;
     use crate::{
@@ -324,10 +328,8 @@ mod tests {
         },
         feed::OrnsteinUhlenbeck,
         strategy::Strategy,
+        types::controller::ArenaController,
     };
-    use alloy::providers::WalletProvider;
-    use crate::types::controller::ArenaController;
-    use alloy::primitives::FixedBytes;
 
     struct StrategyMock;
 
@@ -343,8 +345,8 @@ mod tests {
             engine
                 .modify_liquidity(
                     I256::try_from(10000000).unwrap(),
-                    Signed::try_from(-1000).unwrap(),
-                    Signed::try_from(1000).unwrap(),
+                    Signed::try_from(-887272).unwrap(),
+                    Signed::try_from(887272).unwrap(),
                     provider,
                 )
                 .await
@@ -357,20 +359,12 @@ mod tests {
             _inspector: &mut Box<dyn Inspector<T>>,
             _engine: Engine,
         ) {
-            let controller = ArenaController::new(signal.controller, provider.clone());
+            let sqrt_price_x96 =
+                Float::with_val(53, Float::parse(signal.sqrt_price_x96.to_string()).unwrap());
+            let q96 = Float::with_val(53, 2).pow(96);
+            let price = Float::with_val(53, sqrt_price_x96 / q96).pow(2);
 
-            let position_info = controller
-                .getPositionInfo(
-                    controller.getRouter().call().await.unwrap()._0,
-                    Signed::try_from(-1000).unwrap(),
-                    Signed::try_from(1000).unwrap(),
-                    FixedBytes::ZERO,
-                )
-                .call()
-                .await
-                .unwrap();
-
-            println!("position_info: {:?}", position_info);
+            println!("price: {}", price);
         }
     }
 
@@ -379,12 +373,15 @@ mod tests {
         let builder: ArenaBuilder<_> = ArenaBuilder::new();
 
         let mut arena: Arena<_> = builder
-            .with_strategy(Box::new(StrategyMock {}))
-            .with_feed(Box::new(OrnsteinUhlenbeck::new(10.0, 0.1, 0.1, 0.1, 0.1)))
+            .with_strategy(Box::new(StrategyMock))
+            .with_feed(Box::new(OrnsteinUhlenbeck::new(1.0, 0.1, 1.0, 0.1, 0.1)))
             .with_inspector(Box::new(EmptyInspector {}))
             .with_arbitrageur(Box::new(FixedArbitrageur::default()))
             .build();
 
-        arena.run(Config::new(Uint::from(5000), 10)).await.unwrap();
+        arena
+            .run(Config::new(Uint::from(5000), 10000))
+            .await
+            .unwrap();
     }
 }

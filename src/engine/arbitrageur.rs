@@ -36,7 +36,7 @@ impl Arbitrageur for FixedArbitrageur {
         let controller = ArenaController::new(signal.controller, provider.clone());
 
         controller
-            .equalizePrice()
+            .equalizePrice(Signed::try_from(100000).unwrap())
             .nonce(
                 provider
                     .clone()
@@ -50,6 +50,8 @@ impl Arbitrageur for FixedArbitrageur {
             .watch()
             .await
             .unwrap();
+
+        println!("current: {}", signal.current_value);
     }
 }
 
