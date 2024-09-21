@@ -21,7 +21,7 @@ alloy-sol-macro = "0.8.0"
 alloy-sol-types = "0.8.0"
 serde = { version = "1.0", features = ["derive"] }
 clap = { version = "4.5.16", features = ["derive"] }
-tokio = { version = "1.39.2", features = ["macros"] }
+tokio = { version = "1.39.2", features = ["macros", "rt-multi-thread"] }
 alloy = { version = "0.3.0", features = ["full", "node-bindings", "json"] }
 alloy-chains = "0.1.29"
 alloy-transport-http = "0.3.0"

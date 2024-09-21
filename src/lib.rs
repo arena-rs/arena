@@ -54,16 +54,6 @@ pub type AnvilProvider = FillProvider<
 >;
 
 mod types {
-    pub mod fetcher {
-        use alloy_sol_macro::sol;
-        sol! {
-            #[sol(rpc)]
-            #[derive(Debug)]
-            Fetcher,
-            "src/artifacts/Fetcher.json"
-        }
-    }
-
     pub mod controller {
         use alloy_sol_macro::sol;
         sol! {
