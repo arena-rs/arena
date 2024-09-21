@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use alloy::{
-    primitives::Uint,
     providers::{Provider, ProviderBuilder, WalletProvider},
     signers::local::PrivateKeySigner,
 };
@@ -42,16 +41,20 @@ impl<V> Arena<V> {
     pub async fn run(&mut self, config: Config) -> Result<(), ArenaError> {
         let admin_provider = self.providers[&0].clone();
 
-        let controller =
-            ArenaController::deploy(admin_provider.clone(), config.fee, Uint::from(1)).await?;
+        let controller = ArenaController::deploy(
+            admin_provider.clone(),
+            config.manager_fee,
+            config.initial_price,
+        )
+        .await?;
 
         controller
             .setPool(
-                Uint::from(0),
-                Signed::try_from(2).unwrap(),
-                Address::default(),
-                Uint::from(79228162514264337593543950336_u128),
-                Bytes::new(),
+                config.pool_fee,
+                config.tick_spacing,
+                config.hooks,
+                config.sqrt_price_x96,
+                config.hook_data,
             )
             .send()
             .await

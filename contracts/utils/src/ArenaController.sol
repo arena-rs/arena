@@ -143,7 +143,7 @@ contract ArenaController {
         poolManager.initialize(poolKey, sqrtPriceX96, hookData);
     }
 
-    function addLiquidity(int256 liquidityDelta, int24 tickLower, int24 tickUpper) public {
+    function addLiquidity(int256 liquidityDelta, int24 tickLower, int24 tickUpper, bytes memory hookData) public {
         if (liquidityDelta > 0) {
             require(currency0.mint(address(this), uint256(liquidityDelta)), "Minting currency0 failed");
             require(currency1.mint(address(this), uint256(liquidityDelta)), "Minting currency1 failed");
@@ -159,6 +159,6 @@ contract ArenaController {
             salt: ""
         });
 
-        router.modifyLiquidity(poolKey, params, "");
+        router.modifyLiquidity(poolKey, params, hookData);
     }
 }

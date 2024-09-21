@@ -136,9 +136,7 @@ impl Signal {
 
 #[cfg(test)]
 mod tests {
-    use alloy::{
-        primitives::{Signed, Uint, I256},
-    };
+    use alloy::primitives::{Signed, Uint, I256};
     use async_trait::async_trait;
     use rug::{ops::Pow, Float};
 
@@ -146,10 +144,7 @@ mod tests {
     use crate::{
         arena::{Arena, ArenaBuilder},
         config::Config,
-        engine::{
-            arbitrageur::{FixedArbitrageur},
-            inspector::EmptyInspector,
-        },
+        engine::{arbitrageur::FixedArbitrageur, inspector::EmptyInspector},
         feed::OrnsteinUhlenbeck,
         strategy::Strategy,
     };
@@ -170,6 +165,7 @@ mod tests {
                     I256::try_from(10000000).unwrap(),
                     Signed::try_from(-887272).unwrap(),
                     Signed::try_from(887272).unwrap(),
+                    Bytes::new(),
                     provider,
                 )
                 .await
@@ -178,16 +174,10 @@ mod tests {
         async fn process(
             &self,
             _provider: AnvilProvider,
-            signal: Signal,
+            _signal: Signal,
             _inspector: &mut Box<dyn Inspector<T>>,
             _engine: Engine,
         ) {
-            let sqrt_price_x96 =
-                Float::with_val(53, Float::parse(signal.sqrt_price_x96.to_string()).unwrap());
-            let q96 = Float::with_val(53, 2).pow(96);
-            let price = Float::with_val(53, sqrt_price_x96 / q96).pow(2);
-
-            println!("price: {}", price);
         }
     }
 
@@ -199,11 +189,22 @@ mod tests {
             .with_strategy(Box::new(StrategyMock))
             .with_feed(Box::new(OrnsteinUhlenbeck::new(1.0, 0.1, 1.0, 0.1, 0.1)))
             .with_inspector(Box::new(EmptyInspector {}))
-            .with_arbitrageur(Box::new(FixedArbitrageur { depth: Signed::try_from(10000).unwrap() }))
+            .with_arbitrageur(Box::new(FixedArbitrageur {
+                depth: Signed::try_from(10000).unwrap(),
+            }))
             .build();
 
         arena
-            .run(Config::new(Uint::from(5000), 10000))
+            .run(Config::new(
+                100,
+                Uint::from(0),
+                Signed::try_from(2).unwrap(),
+                Bytes::new(),
+                Uint::from(79228162514264337593543950336_u128),
+                Uint::from(0),
+                Uint::from(1),
+                Address::ZERO,
+            ))
             .await
             .unwrap();
     }

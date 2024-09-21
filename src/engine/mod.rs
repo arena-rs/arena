@@ -4,10 +4,7 @@ use alloy::{
 };
 
 use super::*;
-use crate::{
-    error::ArenaError,
-    types::controller::ArenaController,
-};
+use crate::{error::ArenaError, types::controller::ArenaController};
 /// Defines a trait for custom arbitrage strategies.
 pub mod arbitrageur;
 
@@ -28,12 +25,13 @@ impl Engine {
         liquidity_delta: I256,
         tick_lower: Signed<24, 1>,
         tick_upper: Signed<24, 1>,
+        hook_data: Bytes,
         provider: AnvilProvider,
     ) -> Result<(), ArenaError> {
         let controller = ArenaController::new(self.controller, provider.clone());
 
         controller
-            .addLiquidity(liquidity_delta, tick_lower, tick_upper)
+            .addLiquidity(liquidity_delta, tick_lower, tick_upper, hook_data)
             .nonce(
                 provider
                     .get_transaction_count(provider.default_signer_address())

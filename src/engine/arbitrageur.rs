@@ -1,10 +1,7 @@
 use async_trait::async_trait;
 
 use super::*;
-use crate::{
-    types::controller::ArenaController,
-    AnvilProvider, Signal,
-};
+use crate::{types::controller::ArenaController, AnvilProvider, Signal};
 
 /// Generic trait allowing user defined arbitrage strategies.
 #[async_trait]
@@ -45,8 +42,6 @@ impl Arbitrageur for FixedArbitrageur {
             .watch()
             .await
             .unwrap();
-
-        println!("current: {}", signal.current_value);
     }
 }
 
