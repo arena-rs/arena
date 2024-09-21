@@ -36,7 +36,7 @@ pub use crate::{
     engine::{
         arbitrageur::{Arbitrageur, EmptyArbitrageur},
         inspector::{EmptyInspector, Inspector, LogMessage, Logger},
-        Engine, PoolParameters,
+        Engine,
     },
     feed::{Feed, GeometricBrownianMotion, OrnsteinUhlenbeck},
     strategy::Strategy,
@@ -54,41 +54,6 @@ pub type AnvilProvider = FillProvider<
 >;
 
 mod types {
-    #![allow(clippy::too_many_arguments)]
-    use alloy_sol_macro::sol;
-
-    use crate::types::{
-        controller::ArenaController::PoolKey as ControllerPoolKey,
-        fetcher::Fetcher::PoolKey as FetcherPoolKey,
-        modify_liquidity::PoolModifyLiquidityTest::PoolKey as ModifyLiquidityPoolKey,
-        pool_manager::PoolManager::PoolKey as ManagerPoolKey,
-        swap::PoolSwapTest::PoolKey as SwapPoolKey,
-    };
-
-    pub mod pool_manager {
-        use alloy_sol_macro::sol;
-        sol! {
-            #[sol(rpc)]
-            #[derive(Debug, Default)]
-            PoolManager,
-            "src/artifacts/PoolManager.json"
-        }
-    }
-
-    sol! {
-        #[sol(rpc)]
-        #[derive(Debug)]
-        LiquidExchange,
-        "src/artifacts/LiquidExchange.json"
-    }
-
-    sol! {
-        #[sol(rpc)]
-        #[derive(Debug)]
-        ArenaToken,
-        "src/artifacts/ArenaToken.json"
-    }
-
     pub mod fetcher {
         use alloy_sol_macro::sol;
         sol! {
@@ -99,26 +64,6 @@ mod types {
         }
     }
 
-    pub mod swap {
-        use alloy_sol_macro::sol;
-        sol! {
-            #[sol(rpc)]
-            #[derive(Debug)]
-            PoolSwapTest,
-            "src/artifacts/PoolSwapTest.json"
-        }
-    }
-
-    pub mod modify_liquidity {
-        use alloy_sol_macro::sol;
-        sol! {
-            #[sol(rpc)]
-            #[derive(Debug)]
-            PoolModifyLiquidityTest,
-            "src/artifacts/PoolModifyLiquidityTest.json"
-        }
-    }
-
     pub mod controller {
         use alloy_sol_macro::sol;
         sol! {
@@ -126,126 +71,6 @@ mod types {
             #[derive(Debug)]
             ArenaController,
             "src/artifacts/ArenaController.json"
-        }
-    }
-
-    impl From<FetcherPoolKey> for ManagerPoolKey {
-        fn from(fetcher: FetcherPoolKey) -> Self {
-            ManagerPoolKey {
-                currency0: fetcher.currency0,
-                currency1: fetcher.currency1,
-                fee: fetcher.fee,
-                tickSpacing: fetcher.tickSpacing,
-                hooks: fetcher.hooks,
-            }
-        }
-    }
-
-    impl From<ManagerPoolKey> for FetcherPoolKey {
-        fn from(manager: ManagerPoolKey) -> Self {
-            FetcherPoolKey {
-                currency0: manager.currency0,
-                currency1: manager.currency1,
-                fee: manager.fee,
-                tickSpacing: manager.tickSpacing,
-                hooks: manager.hooks,
-            }
-        }
-    }
-
-    impl From<FetcherPoolKey> for ControllerPoolKey {
-        fn from(fetcher: FetcherPoolKey) -> Self {
-            ControllerPoolKey {
-                currency0: fetcher.currency0,
-                currency1: fetcher.currency1,
-                fee: fetcher.fee,
-                tickSpacing: fetcher.tickSpacing,
-                hooks: fetcher.hooks,
-            }
-        }
-    }
-
-    impl From<ControllerPoolKey> for FetcherPoolKey {
-        fn from(manager: ControllerPoolKey) -> Self {
-            FetcherPoolKey {
-                currency0: manager.currency0,
-                currency1: manager.currency1,
-                fee: manager.fee,
-                tickSpacing: manager.tickSpacing,
-                hooks: manager.hooks,
-            }
-        }
-    }
-
-    impl From<SwapPoolKey> for ManagerPoolKey {
-        fn from(swap: SwapPoolKey) -> Self {
-            ManagerPoolKey {
-                currency0: swap.currency0,
-                currency1: swap.currency1,
-                fee: swap.fee,
-                tickSpacing: swap.tickSpacing,
-                hooks: swap.hooks,
-            }
-        }
-    }
-
-    impl From<ManagerPoolKey> for SwapPoolKey {
-        fn from(manager: ManagerPoolKey) -> Self {
-            SwapPoolKey {
-                currency0: manager.currency0,
-                currency1: manager.currency1,
-                fee: manager.fee,
-                tickSpacing: manager.tickSpacing,
-                hooks: manager.hooks,
-            }
-        }
-    }
-
-    impl From<SwapPoolKey> for ControllerPoolKey {
-        fn from(swap: SwapPoolKey) -> Self {
-            ControllerPoolKey {
-                currency0: swap.currency0,
-                currency1: swap.currency1,
-                fee: swap.fee,
-                tickSpacing: swap.tickSpacing,
-                hooks: swap.hooks,
-            }
-        }
-    }
-
-    impl From<ControllerPoolKey> for SwapPoolKey {
-        fn from(manager: ControllerPoolKey) -> Self {
-            SwapPoolKey {
-                currency0: manager.currency0,
-                currency1: manager.currency1,
-                fee: manager.fee,
-                tickSpacing: manager.tickSpacing,
-                hooks: manager.hooks,
-            }
-        }
-    }
-
-    impl From<ModifyLiquidityPoolKey> for ManagerPoolKey {
-        fn from(swap: ModifyLiquidityPoolKey) -> Self {
-            ManagerPoolKey {
-                currency0: swap.currency0,
-                currency1: swap.currency1,
-                fee: swap.fee,
-                tickSpacing: swap.tickSpacing,
-                hooks: swap.hooks,
-            }
-        }
-    }
-
-    impl From<ManagerPoolKey> for ModifyLiquidityPoolKey {
-        fn from(manager: ManagerPoolKey) -> Self {
-            ModifyLiquidityPoolKey {
-                currency0: manager.currency0,
-                currency1: manager.currency1,
-                fee: manager.fee,
-                tickSpacing: manager.tickSpacing,
-                hooks: manager.hooks,
-            }
         }
     }
 }
@@ -312,8 +137,7 @@ impl Signal {
 #[cfg(test)]
 mod tests {
     use alloy::{
-        primitives::{FixedBytes, Signed, Uint, I256},
-        providers::WalletProvider,
+        primitives::{Signed, Uint, I256},
     };
     use async_trait::async_trait;
     use rug::{ops::Pow, Float};
@@ -323,12 +147,11 @@ mod tests {
         arena::{Arena, ArenaBuilder},
         config::Config,
         engine::{
-            arbitrageur::{EmptyArbitrageur, FixedArbitrageur},
+            arbitrageur::{FixedArbitrageur},
             inspector::EmptyInspector,
         },
         feed::OrnsteinUhlenbeck,
         strategy::Strategy,
-        types::controller::ArenaController,
     };
 
     struct StrategyMock;
@@ -354,7 +177,7 @@ mod tests {
         }
         async fn process(
             &self,
-            provider: AnvilProvider,
+            _provider: AnvilProvider,
             signal: Signal,
             _inspector: &mut Box<dyn Inspector<T>>,
             _engine: Engine,
@@ -376,7 +199,7 @@ mod tests {
             .with_strategy(Box::new(StrategyMock))
             .with_feed(Box::new(OrnsteinUhlenbeck::new(1.0, 0.1, 1.0, 0.1, 0.1)))
             .with_inspector(Box::new(EmptyInspector {}))
-            .with_arbitrageur(Box::new(FixedArbitrageur::default()))
+            .with_arbitrageur(Box::new(FixedArbitrageur { depth: Signed::try_from(10000).unwrap() }))
             .build();
 
         arena

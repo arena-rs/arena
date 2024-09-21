@@ -94,7 +94,7 @@ contract ArenaController {
         require(currency0.approve(address(swapRouter), type(uint256).max), "Approval for currency0 failed");
         require(currency1.approve(address(swapRouter), type(uint256).max), "Approval for currency1 failed");
 
-        (uint160 sqrtPriceX96, int24 tick,,) = fetcher.getSlot0(poolManager, fetcher.toId(poolKey));
+        (uint160 sqrtPriceX96,,,) = fetcher.getSlot0(poolManager, fetcher.toId(poolKey));
         
         uint256 uniswapPrice = FullMath.mulDiv(uint256(sqrtPriceX96) * 10**18, uint256(sqrtPriceX96), 1 << 192);
         uint256 lexPrice = lex.price();
@@ -160,108 +160,5 @@ contract ArenaController {
         });
 
         router.modifyLiquidity(poolKey, params, "");
-    }
-
-    /*function getPositionInfo(
-        address owner,
-        int24 tickLower,
-        int24 tickUpper,
-        bytes32 salt
-    ) external view returns (uint128 liquidity, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128) {
-        PoolId poolId = fetcher.toId(poolKey);
-        // positionKey = keccak256(abi.encodePacked(owner, tickLower, tickUpper, salt))
-        bytes32 positionKey = Position.calculatePositionKey(owner, tickLower, tickUpper, salt);
-
-        (liquidity, feeGrowthInside0LastX128, feeGrowthInside1LastX128) = getPositionInfo(poolManager, poolId, positionKey);
-    }
-
-    function getPositionInfo(IPoolManager manager, PoolId poolId, bytes32 positionId)
-        internal
-        view
-        returns (uint128 liquidity, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128)
-    {
-        bytes32 slot = _getPositionInfoSlot(poolId, positionId);
-
-        // read all 3 words of the Position.State struct
-        bytes32[] memory data = manager.extsload(slot, 3);
-
-        assembly ("memory-safe") {
-            liquidity := mload(add(data, 32))
-            feeGrowthInside0LastX128 := mload(add(data, 64))
-            feeGrowthInside1LastX128 := mload(add(data, 96))
-        }
-    }
-
-    function _getPositionInfoSlot(PoolId poolId, bytes32 positionId) internal pure returns (bytes32) {
-        // slot key of Pool.State value: `pools[poolId]`
-        bytes32 stateSlot = _getPoolStateSlot(poolId);
-
-        // Pool.State: `mapping(bytes32 => Position.State) positions;`
-        bytes32 positionMapping = bytes32(uint256(stateSlot) + POSITIONS_OFFSET);
-
-        // slot of the mapping key: `pools[poolId].positions[positionId]
-        return keccak256(abi.encodePacked(positionId, positionMapping));
-    }
-
-    function _getPoolStateSlot(PoolId poolId) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(PoolId.unwrap(poolId), POOLS_SLOT));
-    }*/
-
-    function computeSwapStep(
-        uint160 sqrtPriceCurrentX96,
-        uint160 sqrtPriceTargetX96,
-        uint128 liquidity,
-        int256 amountRemaining,
-        uint24 feePips
-    ) external pure returns (uint160 sqrtPriceNextX96, uint256 amountIn, uint256 amountOut, uint256 feeAmount) {
-        unchecked {
-            uint256 _feePips = feePips; // upcast once and cache
-            bool zeroForOne = sqrtPriceCurrentX96 >= sqrtPriceTargetX96;
-            bool exactIn = amountRemaining < 0;
-
-            if (exactIn) {
-                uint256 amountRemainingLessFee =
-                    FullMath.mulDiv(uint256(-amountRemaining), MAX_SWAP_FEE - _feePips, MAX_SWAP_FEE);
-                amountIn = zeroForOne
-                    ? SqrtPriceMath.getAmount0Delta(sqrtPriceTargetX96, sqrtPriceCurrentX96, liquidity, true)
-                    : SqrtPriceMath.getAmount1Delta(sqrtPriceCurrentX96, sqrtPriceTargetX96, liquidity, true);
-                if (amountRemainingLessFee >= amountIn) {
-                    // `amountIn` is capped by the target price
-                    sqrtPriceNextX96 = sqrtPriceTargetX96;
-                    feeAmount = _feePips == MAX_SWAP_FEE
-                        ? amountIn // amountIn is always 0 here, as amountRemainingLessFee == 0 and amountRemainingLessFee >= amountIn
-                        : FullMath.mulDivRoundingUp(amountIn, _feePips, MAX_SWAP_FEE - _feePips);
-                } else {
-                    // exhaust the remaining amount
-                    amountIn = amountRemainingLessFee;
-                    sqrtPriceNextX96 = SqrtPriceMath.getNextSqrtPriceFromInput(
-                        sqrtPriceCurrentX96, liquidity, amountRemainingLessFee, zeroForOne
-                    );
-                    // we didn't reach the target, so take the remainder of the maximum input as fee
-                    feeAmount = uint256(-amountRemaining) - amountIn;
-                }
-                amountOut = zeroForOne
-                    ? SqrtPriceMath.getAmount1Delta(sqrtPriceNextX96, sqrtPriceCurrentX96, liquidity, false)
-                    : SqrtPriceMath.getAmount0Delta(sqrtPriceCurrentX96, sqrtPriceNextX96, liquidity, false);
-            } else {
-                amountOut = zeroForOne
-                    ? SqrtPriceMath.getAmount1Delta(sqrtPriceTargetX96, sqrtPriceCurrentX96, liquidity, false)
-                    : SqrtPriceMath.getAmount0Delta(sqrtPriceCurrentX96, sqrtPriceTargetX96, liquidity, false);
-                if (uint256(amountRemaining) >= amountOut) {
-                    // `amountOut` is capped by the target price
-                    sqrtPriceNextX96 = sqrtPriceTargetX96;
-                } else {
-                    // cap the output amount to not exceed the remaining output amount
-                    amountOut = uint256(amountRemaining);
-                    sqrtPriceNextX96 =
-                        SqrtPriceMath.getNextSqrtPriceFromOutput(sqrtPriceCurrentX96, liquidity, amountOut, zeroForOne);
-                }
-                amountIn = zeroForOne
-                    ? SqrtPriceMath.getAmount0Delta(sqrtPriceNextX96, sqrtPriceCurrentX96, liquidity, true)
-                    : SqrtPriceMath.getAmount1Delta(sqrtPriceCurrentX96, sqrtPriceNextX96, liquidity, true);
-                // `feePips` cannot be `MAX_SWAP_FEE` for exact out
-                feeAmount = FullMath.mulDivRoundingUp(amountIn, _feePips, MAX_SWAP_FEE - _feePips);
-            }
-        }
     }
 }

@@ -1,52 +1,18 @@
 use alloy::{
-    primitives::{Address, Signed, Uint, I256},
+    primitives::{Address, Signed, I256},
     providers::{Provider, WalletProvider},
 };
 
 use super::*;
 use crate::{
     error::ArenaError,
-    types::{controller::ArenaController, pool_manager::PoolManager::PoolKey},
+    types::controller::ArenaController,
 };
 /// Defines a trait for custom arbitrage strategies.
 pub mod arbitrageur;
 
 /// Defines a trait that allows custom strategy logging and telemetry.
 pub mod inspector;
-
-/// Type that allows the parameters of a Uniswap v4 pool to be set.
-#[derive(Default, Debug, Clone)]
-pub struct PoolParameters {
-    /// Pool fee.
-    pub fee: Uint<24, 1>,
-
-    /// Pool tick spacing.
-    pub tick_spacing: Signed<24, 1>,
-
-    /// Pool hooks.
-    pub hooks: Address,
-}
-
-impl From<PoolKey> for PoolParameters {
-    fn from(key: PoolKey) -> Self {
-        Self {
-            fee: key.fee,
-            tick_spacing: key.tickSpacing,
-            hooks: key.hooks,
-        }
-    }
-}
-
-impl PoolParameters {
-    /// Public constructor function to instantiate a new `PoolParameters` struct.
-    pub fn new(hooks: Address, tick_spacing: Signed<24, 1>, fee: Uint<24, 1>) -> Self {
-        Self {
-            fee,
-            tick_spacing,
-            hooks,
-        }
-    }
-}
 
 /// Abstraction to allow strategies to call state changing functions on the PoolManager without having to worry about callbacks.
 #[derive(Debug, Clone)]

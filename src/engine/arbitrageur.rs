@@ -2,7 +2,7 @@ use async_trait::async_trait;
 
 use super::*;
 use crate::{
-    types::{controller::ArenaController, swap::PoolSwapTest},
+    types::controller::ArenaController,
     AnvilProvider, Signal,
 };
 
@@ -19,24 +19,19 @@ pub trait Arbitrageur {
 /// Default implementation of an [`Arbitrageur`] that uses the closed-form optimal swap amount to determine the optimal arbitrage.
 #[derive(Default)]
 pub struct FixedArbitrageur {
-    swapper: Option<Address>,
+    /// The fixed amount to swap on each arbitrage opportunity.
+    pub depth: Signed<256, 4>,
 }
 
 #[async_trait]
 impl Arbitrageur for FixedArbitrageur {
-    async fn init(&mut self, signal: &Signal, provider: AnvilProvider) {
-        let swapper = PoolSwapTest::deploy(provider.clone(), signal.manager)
-            .await
-            .unwrap();
-
-        self.swapper = Some(*swapper.address());
-    }
+    async fn init(&mut self, _signal: &Signal, _provider: AnvilProvider) {}
 
     async fn arbitrage(&mut self, signal: &Signal, provider: AnvilProvider) {
         let controller = ArenaController::new(signal.controller, provider.clone());
 
         controller
-            .equalizePrice(Signed::try_from(100000).unwrap())
+            .equalizePrice(self.depth)
             .nonce(
                 provider
                     .clone()
