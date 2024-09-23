@@ -13,10 +13,10 @@ use arena_core::{
 };
 use async_trait::async_trait;
 
-struct StrategyMock;
+struct TemplateStrategy;
 
 #[async_trait]
-impl<T> Strategy<T> for StrategyMock {
+impl<T> Strategy<T> for TemplateStrategy {
     async fn init(
         &self,
         provider: AnvilProvider,
