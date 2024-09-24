@@ -1,6 +1,6 @@
 [package]
 name = "arena-core"
-version = "0.1.4"
+version = "0.1.5"
 edition = "2021"
 repository = "https://github.com/arena-rs/arena"
 description = "Framework for holistic economic modelling and simulation of Uniswap v4 strategies, hooks and pools."
@@ -16,12 +16,12 @@ serde_json = "1.0"
 rand_distr = "0.4.3"
 thiserror = "1.0.63"
 async-trait = "0.1.81"
+alloy-chains = "0.1.29"
 alloy-contract = "0.3.0"
 alloy-sol-macro = "0.8.0"
 alloy-sol-types = "0.8.0"
+alloy-transport-http = "0.3.0"
 serde = { version = "1.0", features = ["derive"] }
 clap = { version = "4.5.16", features = ["derive"] }
 tokio = { version = "1.39.2", features = ["macros", "rt-multi-thread"] }
 alloy = { version = "0.3.0", features = ["full", "node-bindings", "json"] }
-alloy-chains = "0.1.29"
-alloy-transport-http = "0.3.0"
