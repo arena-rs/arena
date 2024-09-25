@@ -51,7 +51,7 @@ async fn main() {
     let builder: ArenaBuilder<_> = ArenaBuilder::new();
 
     let mut arena: Arena<_> = builder
-        .with_strategy(Box::new(StrategyMock))
+        .with_strategy(Box::new(TemplateStrategy))
         .with_feed(Box::new(OrnsteinUhlenbeck::new(1.0, 0.1, 1.0, 0.1, 0.1)))
         .with_inspector(Box::new(EmptyInspector {}))
         .with_arbitrageur(Box::new(FixedArbitrageur {
