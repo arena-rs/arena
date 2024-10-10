@@ -62,7 +62,7 @@ async fn main() {
     arena
         .run(Config::new(
             // timesteps to run for
-            10,
+            1000,
             // manager fee
             Uint::from(0),
             // pool tick spacing

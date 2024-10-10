@@ -4,7 +4,7 @@ use alloy::{
     providers::{Provider, ProviderBuilder, WalletProvider},
     signers::local::PrivateKeySigner,
 };
-
+use std::time::Instant;
 use super::*;
 use crate::{
     config::Config,
@@ -111,6 +111,7 @@ impl<V> Arena<V> {
         self.arbitrageur.init(&signal, admin_provider.clone()).await;
 
         for step in 0..config.steps {
+            let instant = Instant::now();
             controller
                 .setPrice(
                     alloy::primitives::utils::parse_ether(&self.feed.step().to_string())
@@ -173,6 +174,7 @@ impl<V> Arena<V> {
             }
 
             self.feed.step();
+            println!("Step {} took {:?}", step, instant.elapsed());
         }
 
         // controller
