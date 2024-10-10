@@ -2,11 +2,16 @@
 
 ![visitors](https://visitor-badge.laobi.icu/badge?page_id=arena-rs.arena)
 [![Twitter Badge](https://badgen.net/badge/icon/twitter?icon=twitter&label)](https://twitter.com/anthiasxyz)
+![Telegram badge](https://img.shields.io/badge/chat-Discuss-blue?logo=telegram&style=flat-square&link=https://t.me/+U043cjuV5lA2ZDQ8)
+![Github Actions](https://github.com/arena-rs/arena/workflows/lint/badge.svg)
+
 ![image](https://github.com/arena-rs/.github/blob/main/arena_banner.png)
 
 > *Arena is a powerful and extensible framework for holistic economic modelling and simulation of Uniswap v4 strategies, hooks and pools.*
 
 Track how metrics evolve over time, and over various market conditions.
+
+Arena has an [examples](https://github.com/arena-rs/arena/tree/main/examples) folder on how to use the framework.
 
 ## Overview
 
@@ -67,3 +72,5 @@ git submodule update --init --recursive
 - Check out example strategies in the `examples/` directory.
 
 We welcome contributions!
+
+See our [Contributing Guidelines](https://github.com/arena-rs/arena/blob/main/CONTRIBUTING.md)
